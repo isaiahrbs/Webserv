@@ -1,0 +1,52 @@
+bool server::_setup_socket()
+	1:
+	• socket: crée un nouvel objet et retourne un FD (File descriptor)
+	• AF_INET: famille d'addresses Ipv4 (si tu veux IPv6 ca serait AF_INET6)
+	• SOCK_STREAM: type de socket TCP
+	• 0: c'est le numéro du protocole. En pratique on laisse 0 pour que le noyau choisis le protocole par défaut
+
+	2:
+	• Verifie si socket a échoué ou si il a bien marché
+
+	3:
+	• opt = 1: opt est la valeur que tu vas passer a setsockopt. Ici on veut activer une option booléene, setsockopt attent un pointeur vers la valeur et sa taille
+
+	4:
+	• setsockopt(): configure des options au niveau du socket.
+	• setsockopt retourne -1 en cas d’erreur ; ici tu ne vérifies pas le retour. C’est recommandé de vérifier et fermer le socket si setsockopt échoue.)
+	• _listen_fd: le socket qu'il veut config
+	• SQL_SOCKET: c'est le "level" passé à setsocketopt pour indiquer que l'option s'applique au niveau du socket lui meme
+	• SO_REUSEADDR: il permet de réutiliser rapidement une adresse/port locale après que le socket précédent a été fermé
+	• sizeof(opt): taille en octet de la valeur
+
+	5:
+	• Déclare la structure qui contient l'adresse IPv4 pour bind().
+	• sockaddr_in: une structur standard, elle contient sin_faminly, sin_port, sin_addr
+
+	6:
+	• Initialise toute la structure a 0 pour éviter des valeurs indéfinies dans les champs non écrits
+	• Important pour la sécurité/précision
+
+	7:
+	• Définit la famille d'addresses de la structure (AF_INET = Ipv4). Elle doit correspondre à celle passé à socket()
+
+	8:
+	• INADDR_ANY: c'est en gros 0.0.0.0 qui veut dire qu'on accepte les connexions arrivant sur n'importe quelle interface ràseau de la machine
+	• Si tu voulais écouter que sur le localhost, tu mettrais autre chose mais je ne sais plus ce que c'est
+
+	9:
+	• sin_port: attend le port en "network byte order"
+	• htons: convertit le short de l'ordre de l'hote à l'ordre réseau
+	• sans htons, le port serait mal intreprété sur architectures little-endiant x(86) que j'en ai aucune idée de ce que c'est mais c'est imporant
+
+	10:
+	• bind(): il dit au kernel "pour tout paquet IP arrivant sur cette machine et ciblant cette adresse IP et ce port, livre les à ce socket (fd), après bind le kernel sait que ce port est pris par son processus
+	• le cast (struct sockaddr*) est necessaire car bind() accepte une structure générique
+	• retourne -1 en cas d'erreurs (ex. port déjàa utilisé, permissions)
+
+	11:
+	• listen(): met le socket en mode écoute, le noyau va accepter les requetes de connexions entrantes (SYN) et les placer dans une file d'attente
+	• 16: indique la taille maximale de la file d'attente en attendant que ton processus appelle accept(), si la file dépasse la taille: nouvelles connecions peuvent être ignorée/droppées ou le client peut voir "connection refused" ou expirations et je crois que ca fait en sorte qu'il resiste au flood comme ça.
+
+	12:
+	• si toute les etapes marchent la fonction retourne true
