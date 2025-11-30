@@ -1,0 +1,36 @@
+Imagine que le serveur est une personne qui
+  attend un appel téléphonique.
+
+  Le téléphone, c'est ton socket (_listen_fd).
+
+  Au début, quand tu attends un appel, tu dois rester
+  assis à côté du téléphone sans rien faire d'autre. C'est
+  ce qu'on appelle "bloquant". C'est un peu ennuyeux.
+
+  Le code que tu m'as montré, c'est comme si on activait
+  une option magique sur le téléphone :
+
+   1. `int flags = fcntl(...)`: On regarde d'abord les
+      réglages actuels du téléphone.
+
+   2. `fcntl(..., flags | O_NONBLOCK)`: On dit au
+      téléphone : "Garde tous tes réglages, mais en plus,
+      active le mode 'ne pas déranger'". Dans ce mode, au
+      lieu d'attendre sans rien faire, tu peux continuer à
+      jouer. Tu jettes juste un coup d'œil rapide de temps
+      en temps pour voir si quelqu'un appelle. C'est le
+      mode "non-bloquant".
+
+   3. `if (... == -1)`: On vérifie si l'activation du mode
+      magique a échoué.
+
+   4. `{ ... return false; }`: Si ça a échoué, on dit
+      "Zut, le téléphone est cassé !", on le raccroche
+      (close) et on arrête tout.
+
+  En résumé, ce code change le "téléphone" du serveur pour
+  qu'il n'ait pas à attendre bêtement un appel et puisse
+  faire autre chose en même temps.
+
+
+  fnctl c'est le couteau suisse des fichiers

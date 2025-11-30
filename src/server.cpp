@@ -4,6 +4,8 @@
 #include <cstring>
 #include <cerrno>
 #include <unistd.h>
+#include <fcntl.h>
+#include <poll.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -28,6 +30,15 @@ bool server::_setup_socket() {
         _listen_fd = -1;
         return false;
     }
+
+    int flags = fcntl(_listen_fd, F_GETFL, 0);
+    if (flags == -1 || fcntl(_listen_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl");
+        close(_listen_fd);
+        _listen_fd = -1;
+        return false;
+    }
+
     struct sockaddr_in addr;
     std::memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;

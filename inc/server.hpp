@@ -16,5 +16,10 @@ public:
 
 	// ===== Functions =====
 	bool init();
+	
+	// ce n'est pas la version definitif qu'on va utiliser de run celui la 
 	void run_one_connexion();
+
+	// run asynchrone I/O (la bonne version)
+	void run();
 };
