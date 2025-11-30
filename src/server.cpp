@@ -13,6 +13,13 @@
 
 server::server(int port) : _port(port), _listen_fd(-1) {};
 
+// Display error message & close FD
+void    errorMsg(const std::string& message, int& fd) {
+    perror(message.c_str());
+    close(fd);
+    fd = -1;
+}
+
 // en ez il setup la connection avec la personne
 // ta vrmt cru que j'allais deviner ca sans l'ia bro?!
 bool server::_setup_socket() {
@@ -25,17 +32,13 @@ bool server::_setup_socket() {
     int opt = 1;
     if (setsockopt(_listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
     {
-        perror("setsockopt");
-        close(_listen_fd);
-        _listen_fd = -1;
+        errorMsg("setsockopt", _listen_fd);
         return false;
     }
 
     int flags = fcntl(_listen_fd, F_GETFL, 0);
     if (flags == -1 || fcntl(_listen_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-        perror("fcntl");
-        close(_listen_fd);
-        _listen_fd = -1;
+        errorMsg("fcntl", _listen_fd);
         return false;
     }
 
@@ -46,16 +49,12 @@ bool server::_setup_socket() {
     addr.sin_port = htons(_port);
     if (bind(_listen_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
     {
-        perror("bind");
-        close(_listen_fd);
-        _listen_fd = -1;
+        errorMsg("bind", _listen_fd);
         return false;
     }
     if (listen(_listen_fd, 16) < 0)
     {
-        perror("listen");
-        close(_listen_fd);
-        _listen_fd = -1;
+        errorMsg("listen", _listen_fd);
         return false;
     }
     return true;
