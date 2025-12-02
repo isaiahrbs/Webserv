@@ -1,23 +1,15 @@
-#include <iostream>
-#include <cstdlib>
-#include "server.hpp"
+#include "inc/server.hpp"
+#include "inc/socket.hpp"
 
-int main(int argc, char** argv)
-{
-	int port = 8080;
+int main(int argc, char **argv) {
+	server Server(8080);// on va changer a le port donner dans le fichier
 
-	if (argc != 2)
-	{
-		std::cout << "How to use: " << argv[0] << " <filename>" << std::endl;
-		return -1;
+	//parse_input(argv); fais ca dimicouille
+
+	try {
+		Server.setup_socket();
 	}
-	port = std::atoi(argv[1]);
-	server srv(port);
-	if (!srv.init())
-	{
-		std::cerr << "Failed to initialize server on port " << port << "\n";
-        return 1;
+	catch (std::exception& e) {
+
 	}
-	srv.run_one_connexion(); // accepte une connexion, envoie Hello World, ferme
-    return 0;
 }

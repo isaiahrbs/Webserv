@@ -1,25 +1,21 @@
 #pragma once
 
 #include <iostream>
-
+#include "socket.hpp"
 class server
 {
 private:
-	int		_port;
-	int		_listen_fd;
-	bool	_setup_socket();
+	int _port;
+	int _maxUsers;
+	Socket* _listeningSocket;
 
 public:
 	// ===== Constructors =====
-	server(int port = 8080);
+	server(int port);
 	~server();
 
 	// ===== Functions =====
-	bool init();
+	int	getPort();
 	
-	// ce n'est pas la version definitif qu'on va utiliser de run celui la 
-	void run_one_connexion();
-
-	// run asynchrone I/O (la bonne version)
-	void run();
+	void setup_socket();
 };

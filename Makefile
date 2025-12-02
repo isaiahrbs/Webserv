@@ -6,17 +6,18 @@ CXX = c++
 
 # Flags de compilation
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
-INCDIR = inc
 
 # Liste des fichiers source
 SRCS = webserv.cpp \
-       src/server.cpp
+	src/server.cpp \
+	src/socket.cpp
 
 # Fichiers objets
 OBJS = $(SRCS:.cpp=.o)
 
 # Fichiers d'en-tête
-HEADERS = $(INCDIR)/server.hpp
+HEADERS = inc/server.hpp \
+		  inc/socket.hpp
 
 # Règle par défaut
 all: $(NAME)
@@ -40,4 +41,4 @@ fclean: clean
 # Règle pour recompiler
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re% 

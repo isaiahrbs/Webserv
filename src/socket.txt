@@ -1,0 +1,82 @@
+Notre analogie définitive :
+
+* L'Adresse IP : L'adresse de ton immeuble dans la
+	ville.
+* Le Port : Le numéro d'un bureau spécifique à
+	l'intérieur de cet immeuble.
+* Le Socket (`fd`) : Le téléphone qui est posé sur
+	le bureau dans cette pièce.
+
+
+Au début, tu appelles socket(). Cette fonction te
+donne un téléphone neuf et fonctionnel. Tu as son
+numéro d'identification interne (fd), mais ce
+téléphone n'est branché nulle part. Il n'est dans
+aucun bureau et dans aucun immeuble. Il ne peut ni
+appeler ni recevoir d'appels.
+
+La fonction bind()
+
+bind() est l'action de l'installateur qui vient pour
+brancher ton téléphone et le rendre opérationnel.
+
+
+Son travail est de dire : "Ce téléphone (fd) est
+maintenant celui du bureau 8080 (le port) dans
+l'immeuble situé au 123, rue du Web (l'adresse IP)".
+
+Une fois que bind() a terminé, le standard
+téléphonique mondial sait que pour joindre ton
+programme, il faut appeler l'immeuble (IP), demander
+le bureau 8080 (le port), et l'appel sera alors
+transféré à ton téléphone (fd).
+
+La structure addr
+
+Comment l'installateur (bind) sait-il à quel bureau
+et dans quel immeuble il doit brancher le téléphone
+? Il a besoin d'un ordre de travail clair et précis.
+
+La structure addr est cet ordre de travail.
+
+Voici comment tu le remplis :
+
+1. addr.sin_family = AF_INET;
+	* Sur l'ordre de travail : Tu coches la case
+		"Type de mission : Installation dans un
+		immeuble standard du réseau Internet (IPv4)".
+
+2. addr.sin_port = htons(_port);
+	* Sur l'ordre de travail : Dans la section
+		"Numéro du bureau où brancher le téléphone",
+		tu écris ton numéro de port (par exemple,
+		8080).
+	* htons() est la formalité administrative qui
+		garantit que le numéro est écrit dans le
+		jargon technique correct.
+
+3. addr.sin_addr.s_addr = INADDR_ANY;
+	* Sur l'ordre de travail : Dans la section
+		"Immeuble concerné", tu donnes une
+		instruction spéciale : "L'immeuble à
+		n'importe laquelle de ses adresses connues".
+	* INADDR_ANY veut dire que l'appel sera
+		acheminé vers ton téléphone, que l'appelant
+		ait utilisé l'adresse de la façade principale
+		de l'immeuble (ton IP Ethernet) ou l'adresse
+		de l'entrée de service (ton IP Wi-Fi). C'est
+		ce qu'on veut.
+
+Résumé final :
+
+1. Tu reçois un téléphone (socket()).
+2. Tu remplis un ordre de travail (addr) pour dire
+	dans quel bureau (port) de quel type d'immeuble
+	(AF_INET / IPv4) le brancher.
+3. Tu donnes le téléphone et l'ordre de travail à
+	l'installateur (bind).
+4. L'installateur fait le branchement.
+
+Et voilà. Après bind, ton téléphone est branché,
+actif, et prêt à recevoir des appels dans le bon
+bureau du bon immeuble.
