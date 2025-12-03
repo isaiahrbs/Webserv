@@ -1,7 +1,8 @@
 #include "server.hpp"
+#include "SocketServer.hpp"
 
 server::server(int port) : _port(port), _maxUsers(16), _listeningSocket(0) {
-	this->_listeningSocket = new Socket(this->_port);
+	this->_listeningSocket = new SocketServer(_port, _maxUsers);
 }
 
 server::~server() {
@@ -15,7 +16,7 @@ int	server::getPort() {
 
 void	server::setup_socket() {
 	_listeningSocket->create();
-	_listeningSocket->set_non_blocking();
+	_listeningSocket->setNonBlocking();
 	_listeningSocket->bindSocket();
-	_listeningSocket->listenSocket(_maxUsers);
+	_listeningSocket->listenSocket();
 }
