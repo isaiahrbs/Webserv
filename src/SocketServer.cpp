@@ -64,19 +64,3 @@ int	SocketServer::acceptClient() {
 		throw socketException("Error: accept");
 	return new_socket;
 }
-
-SocketServer::socketException::socketException() {
-	_msg = "Socket Exception";
-}
-
-SocketServer::socketException::socketException(const std::string& msg) {
-	_msg = msg;
-}
-
-const char* SocketServer::socketException::what() const throw() {
-	return _msg.c_str();
-}
-
-SocketServer::socketException::~socketException() throw() {
-	std::cout << "Socket destructor called" << std::endl;
-}
