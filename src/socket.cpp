@@ -6,8 +6,6 @@
 #include <netinet/in.h>
 #include <cstring>
 
-
-
 Socket::Socket(int port) {
 	_fd = -1;
 	_port = port;
@@ -65,7 +63,7 @@ void	Socket::accept_clients() {
 	if (new_socket < 0)
         throw socketException("Error: accept");
 }
-
+ 
 int Socket::get_fd() const {
 	return _fd;
 }
@@ -78,6 +76,10 @@ Socket::socketException::socketException(const std::string& msg) {
 	_msg = msg;
 }
 
-const char* Socket::socketException::what() const {
+const char* Socket::socketException::what() const throw() {
 	return _msg.c_str();
+}
+
+Socket::socketException::~socketException() throw() {
+	std::cout << "Socket destructor called" << std::endl;
 }

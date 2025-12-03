@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "socket.hpp"
+
 class server
 {
 private:

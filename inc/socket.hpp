@@ -3,6 +3,9 @@
 #include <iostream>
 #include <string>
 #include <exception>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 class Socket
 {
@@ -42,6 +45,9 @@ public:
 
 			// returns error message from constructor
 			virtual const char* what() const throw();
+
+			// obliger d'ajouter lui car std::exception a un destructor throw()
+			virtual ~socketException() throw();
 	};
 
 };

@@ -7,6 +7,9 @@ CXX = c++
 # Flags de compilation
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
+# Répertoire des en-têtes
+INCDIR = inc
+
 # Liste des fichiers source
 SRCS = webserv.cpp \
 	src/server.cpp \
