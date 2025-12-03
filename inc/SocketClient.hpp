@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 11:33:58 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/03 11:54:06 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/03 12:35:08 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@ public:
 	void		setNonBlocking();
 	ssize_t		sendData(const void* buf, size_t len);
 	ssize_t		recvData(void* buf, size_t len);
-	int			getClientFd() const;
-	sockaddr_in	getSockAddr() const;
+	bool		isConnected() const;
 
 };

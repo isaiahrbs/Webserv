@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 11:34:17 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/03 11:42:18 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/03 12:32:55 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,16 @@ public:
 	SocketServer(int port, int maxUsers);
 	virtual	~SocketServer();
 
-	void	create();
-	void	setNonBlocking();
-	void	bindSocket();
-	void	listenSocket();
-	int		acceptClient();
+	void		create();
+	void		setNonBlocking();
+	void		bindSocket();
+	void		listenSocket();
+	int			acceptClient();
 
-	int		getPort() const;
-	int		getMaxUsers() const;
+	bool		isListening() const;
+	void		setReuseAddr();
+	int			getPort() const;
+	int			getMaxUsers() const;
+
+
 };
