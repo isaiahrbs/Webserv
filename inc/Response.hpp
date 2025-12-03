@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*    Request.hpp                                       :+:      :+:    :+:   */
+/*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/03 12:49:52 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/03 13:11:16 by dinguyen         ###   ########.fr       */
+/*   Created: 2025/12/03 13:06:22 by dinguyen          #+#    #+#             */
+/*   Updated: 2025/12/03 13:15:55 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,26 +14,28 @@
 
 #include <string>
 
-#define MAX_HEADERS 50
+# define MAX_HEADERS 50
 
-class	Request {
+class	Response {
+
 private:
-	std::string	_method;
-	std::string	_uri;
 	std::string	_version;
-	std::string	_headersKeys[MAX_HEADERS];
+	std::string	_statusMessage;
+	std::string	_headerKeys[MAX_HEADERS];
 	std::string	_headerValues[MAX_HEADERS];
-	int			_headerCount;
 	std::string	_body;
+	int			_statusCode;
+	int			_headerCount;
 
 public:
-	Request();
-	~Request();
+	Response();
+	~Response();
 
-	bool	parse(const std::string &rawRequest);
-	std::string	getMethod() const;
-	std::string	getUri() const;
-	std::string	getVersion() const;
-	std::string	getHeader(const std::string &key) const;
-	std::string	getBody() const;
+	void	setVersion(const std::string &version);
+	void	setStatus(int code, const std::string &message);
+	void	setHeader(const std::string &key, const std::string &value);
+	void	setBody(const std::string &body);
+
+	std::string	build() const;
+
 };
