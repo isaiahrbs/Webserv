@@ -25,7 +25,7 @@ public:
 	void	set_non_blocking();
 	void	bindSocket();
 	void	listenSocket(int _max);
-	
+
 	void	accept_clients();
 
 
@@ -36,7 +36,7 @@ public:
 		private:
 			std::string _msg;
 		public:
-		
+
 			// if no custom message, default message
 			socketException();
 

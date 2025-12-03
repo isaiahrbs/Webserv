@@ -43,7 +43,7 @@ void	Socket::bindSocket() {
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(_port);
 
-	// bind 
+	// bind
 	if (bind(_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
 		throw socketException("Error: bind");
 }
@@ -58,12 +58,12 @@ void	Socket::listenSocket(int max) {
 void	Socket::accept_clients() {
 	int	new_socket;
 	int addrlen = sizeof(addr);
-	
+
 	new_socket = accept(_fd, (struct sockaddr *)&addr, (socklen_t*)&addrlen);
 	if (new_socket < 0)
         throw socketException("Error: accept");
 }
- 
+
 int Socket::get_fd() const {
 	return _fd;
 }
