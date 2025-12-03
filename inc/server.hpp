@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include "socket.hpp"
+#include "SocketServer.hpp"
 
 class server
 {

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   SocketServer.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: irobinso <irobinso@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 11:34:17 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/03 12:32:55 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/03 17:04:25 by irobinso         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ public:
 	void		setNonBlocking();
 	void		bindSocket();
 	void		listenSocket();
-	int			acceptClient();
+	int			acceptClient(); // a implementer
 
 	bool		isListening() const;
 	void		setReuseAddr();
