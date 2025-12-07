@@ -1,5 +1,5 @@
-#include "server.hpp"
-#include "SocketServer.hpp"
+#include "../inc/server.hpp"
+#include "../inc/SocketServer.hpp"
 #include <iostream>
 #include <unistd.h>
 
