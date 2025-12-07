@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
 	try {
 		Server.setup_socket();
 		std::cout << "Socket setup pass" << std::endl;
+		Server.run();
 	}
 	catch (std::exception& e) {
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include "SocketServer.hpp"
 #include "SocketClient.hpp"
 
@@ -11,7 +11,7 @@ private:
 	int _port;
 	int _maxUsers;
 	SocketServer* _listeningSocket;
-	std::map<SocketClient, int> Clients;
+	std::unordered_map<int, SocketClient*> clients; // les clients connecté
 
 public:
 	// ===== Constructors =====
@@ -20,6 +20,8 @@ public:
 
 	// ===== Functions =====
 	int	getPort();
+	int getServerSize();
+	int getServerLimit();
 	
 	void setup_socket();
 	void run();
