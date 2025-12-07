@@ -1,0 +1,14 @@
+# Fichiers générés par Doxygen
+html/
+doc/
+
+# Fichiers objets et binaires de compilation
+*.o
+webserv
+
+# Fichiers de configuration d'éditeur (optionnel mais recommandé)
+.vscode/
+*.swp
+
+# Fichiers système (optionnel)
+.DS_Store
