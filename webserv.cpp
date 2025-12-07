@@ -1,5 +1,5 @@
 #include "inc/server.hpp"
-#include "inc/socket.hpp"
+#include "inc/SocketServer.hpp"
 
 int main(int argc, char **argv) {
 	server Server(8080);// on va changer a le port donner dans le fichier
@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 
 	try {
 		Server.setup_socket();
-		std::cout << "Passed all tests" << std::endl;
+		std::cout << "Socket setup pass" << std::endl;
 	}
 	catch (std::exception& e) {
 
