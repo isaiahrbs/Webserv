@@ -25,4 +25,22 @@ public:
 	
 	void setup_socket();
 	void run();
+
+	class	serverException : public std::exception {
+		private:
+			std::string	_msg;
+		public:
+		
+			// if no custom message, default message
+			serverException();
+			
+			// for custom error message
+			serverException(const std::string &msg);
+
+			// returns error message from constructor
+			virtual const char*	what() const throw();
+
+			// obliger d'ajouter lui car std::exception a un destructor throw()
+			virtual ~serverException() throw();
+	};
 };
