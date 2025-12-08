@@ -53,14 +53,29 @@ void	server::run() {
 			throw serverException("Activity < 0");
 			break;
 		}
-		if (FD_ISSET(listening_fd, &read_fds))
-			std::cout << "New connection waiting!" << std::endl;
-		if (clients.size() < _maxUsers) {
-			//CREATE NEW SOCKET CLIENT ON HEAP
-			//ADD OBJECT TO UNORDERED MAP (clients) IN SERVER
-
-		}
-		}
+		if (activity > 0) {
+			if (FD_ISSET(listening_fd, &read_fds)) {
+				std::cout << "New connection waiting!" << std::endl;
+				if ((int)clients.size() < _maxUsers) {
+				//CREATE NEW SOCKET CLIENT ON HEAP
+				//ADD OBJECT TO UNORDERED MAP (clients) IN SERVER
+				
+				}
+				else {
+					std::cout << "Server is already full" << std::endl;
+				}
+			}
+			std::map<int, SocketClient*>::iterator it;
+			for (it = clients.begin(); it != this->clients.end(); ++it) {
+				int client_fd = it->first;// donne la clé (le int)
+				SocketClient* client_ptr = it->second;// donne la valeur (socketclient)
+				(void) client_ptr;
+				if (FD_ISSET(client_fd, &read_fds)) {
+					std::cout << "Client : " << client_fd << " sent a message." << std::endl;
+				}
+			}
+		}	
+	}
 }
 
 /* for (auto const& [client_fd, client_ptr]

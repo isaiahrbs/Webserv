@@ -1,4 +1,4 @@
-#include "ASocket.hpp"
+#include "../inc/ASocket.hpp"
 
 ASocket::socketException::socketException() {
 	_msg = "Socket Exception";
@@ -15,3 +15,4 @@ const char* ASocket::socketException::what() const throw() {
 ASocket::socketException::~socketException() throw() {
 	std::cout << "Socket destructor called" << std::endl;
 }
+

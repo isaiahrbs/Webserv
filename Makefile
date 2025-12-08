@@ -13,14 +13,20 @@ INCDIR = inc
 # Liste des fichiers source
 SRCS = webserv.cpp \
 	src/server.cpp \
-	src/socket.cpp
+	src/ASocket.cpp \
+	src/SocketServer.cpp \
 
 # Fichiers objets
 OBJS = $(SRCS:.cpp=.o)
 
 # Fichiers d'en-tête
 HEADERS = inc/server.hpp \
-		  inc/socket.hpp
+		  inc/ASocket.hpp \
+		  inc/SocketServer.hpp \
+		  inc/SocketClient.hpp \
+		  inc/Response.hpp \
+		  inc/Config.hpp \
+		  inc/Request.hpp \
 
 # Règle par défaut
 all: $(NAME)
