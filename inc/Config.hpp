@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 17:55:27 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 09:34:08 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 09:37:11 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <exception>
 
 	/**
 	* @brief	Contient toute la configuration pour une route spécifique (un bloc "location")
