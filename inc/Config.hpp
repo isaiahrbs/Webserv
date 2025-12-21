@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 17:55:27 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 12:02:43 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 13:26:57 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <cstdlib>
 #include "Exceptions.hpp"
 
 	/**
@@ -76,11 +77,11 @@ struct	LocationConfig {
 	std::map<std::string, std::string>	cgiHandlers;
 };
 
-/**
- * @brief	Contient la config complete pour un serveur virtuel (un bloc "server").
- * 			Chaque instance de cette structure represente un serveur qui ecoute sur un port specifique et possede son propre
- * 			ensemble de règles.
- */
+	/**
+	 * @brief	Contient la config complete pour un serveur virtuel (un bloc "server").
+	 * 			Chaque instance de cette structure represente un serveur qui ecoute sur un port specifique et possede son propre
+	 * 			ensemble de règles.
+	*/
 struct	ServerConfig {
 	/**
 	 * @brief	le port sur lequel ce serveur ecoute les connexions entrantes.
@@ -91,6 +92,11 @@ struct	ServerConfig {
 	 * @details	Souvent 127.0.0.1 (localhost) ou 0.0.0.0 (toutes les interfaces)
 	 */
 	std::string					host;
+	/**
+	* @brief	Le répertoire racine du serveur (ex: www/server1/).
+	* @details	Chemin de base à partir duquel le serveur servira les fichiers.
+	*/
+	std::string					root;
 	/**
 	 * @brief	La taille maximale autorisée pour le corps d'une requete client, en octets.
 	 * @details	Si une requete depasse cette taille, le serveur doit renvoyer une erreur 413 Payload Too large.
@@ -125,11 +131,23 @@ public:
 	~ConfigParser();
 
 	/**
-	 * @brief	Parse le fichier de configuration et retourne une liste de configurations de serveur.
-	 * @param	filepath Le chemin vers le fichier de configuration.
-	 * @return	Un vectur de structures ServerConfig
-	 * @throw	Lance une exception en cas d'erreur de syntaxe ou de fichier non trouvé.
-	 */
+	 * @brief	Parse le fichier de configuration complet et retourne une liste de configurations de serveur
+	 * @details	Lit d'abord le fichier avec _readFile() et réinitialise la position de parsing.
+	 * 			Puis boucle en utilisant _peekToken() pour vérifier si on atteint EOF:
+	 * 			- Valide que le prochain token est "server"
+	 * 			- Appelle _parseServerBlock() pour chaque bloc server trouvé
+	 * 			- Ajoute chaque ServerConfig au vecteur de résultat
+	 * 			Valide que au moins un bloc server a été trouvé.
+	 * @param	filepath Le chemin vers le fichier de configuration à parser
+	 * @return	Un std::vector<ServerConfig> contenant toutes les configurations de serveur parsées
+	 * @throw	ConfigParserE si:
+	 * 			- Le fichier ne peut pas être ouvert (via _readFile())
+	 * 			- Aucun bloc "server" n'est trouvé dans le fichier
+	 * 			- Un token autre que "server" est rencontré au niveau racine
+	 * 			- Un bloc server est invalide (via _parseServerBlock())
+	 * @note	Point d'entrée principal du ConfigParser
+	 * 		Exemple: std::vector<ServerConfig> servers = parser.parse("config/server.conf");
+	*/
 	std::vector<ServerConfig>	parse(const std::string &filepath);
 
 private:
@@ -228,39 +246,105 @@ private:
 	 * 			de la directive "listen"
 	*/
 	void						_parseListenDirective(const std::string &listenStr, std::string &host, int &port);
-
-
-
 	/**
-	 * @brief	Parse un bloc "server {...}"
-	 * @return	Une structurer ServerConfig remplie
-	 * @throw	Lance une exception en cas d'erreur de syntaxe
+	 * @brief	Parse une liste de methodes HTTP(ex "GET POST DELETE")
+	 * @details	Lit les tokens jusqu'à trouver un point-virgule (';').
+	 * 			Chaque token entre les directives est considéré comme une méthode HTTP.
+	 * 			Valide que:
+	 * 			- Aucun symbole spécial ({, }) n'apparaît dans la liste
+	 * 			- La liste n'est pas vide (au moins une méthode requise)
+	 * 			- Le fichier ne se termine pas avant la fin de la liste (EOF inattendu)
+	 * @return	Un std::vector<std::string> contenant toutes les méthodes listées
+	 * @throw	ConfigParserE si:
+	 * 			- La liste est vide
+	 * 			- Un symbole invalide est rencontré
+	 * 			- EOF atteint avant de trouver ';'
+	 * @note	Exemple de config: "allowed_methods GET POST DELETE;"
+	 * 			Retourne: ["GET", "POST", "DELETE"]
 	*/
-	ServerConfig				_parseServerBlock();
+	std::vector<std::string>	_parseMethodsList();
 	/**
-	 * @brief	Parse un bloc "locatoin /path {...}"
-	 * @return	Une structure LocationConfig remplie
-	 * @throw	Lance une exception en cas d'erreur de syntaxe
-	*/
-	LocationConfig				_parseLocationBlock();
-	/**
-	 * @brief	Parse une directive simple (ex "listen 127.0.0.1:8080;")
-	 * @param	key La clé de la directive (ex "listen")
-	 * @param	config La structure ServerConfig a remplir
-	 * @throw	Lance une exception si la directive est invalide
+	 * @brief	Parse une directive au niveau serveur (bloc "server {...}")
+	 * @details	Traite les directives suivantes selon la clé reçue :
+	 * 			- "listen": Appelle _parseListenDirective() pour extraire IP et port
+	 * 			- "server_name": Lit tous les domaines jusqu'à ';' dans serverNames vector
+	 * 			- "max_body_size": Convertit la taille avec _stringToInt() en octets
+	 * 			- "root": Extrait le chemin racine du serveur
+	 * 			- "error_page": Lit le code erreur, puis le chemin du fichier d'erreur personnalisé
+	 * 			Chaque directive doit se terminer par ';'. Cette fonction est appelée depuis
+	 * 			_parseServerBlock() lors du traitement du contenu d'un bloc server.
+	 * @param	key La clé de la directive à traiter (ex: "listen", "root", "max_body_size")
+	 * @param	config Référence vers la structure ServerConfig à remplir avec les valeurs parsées
+	 * @throw	ConfigParserE si:
+	 * 			- La directive est inconnue
+	 * 			- Un argument obligatoire manque ou est vide
+	 * 			- Le ';' de fin manque
+	 * 			- Une valeur numérique est invalide (via _stringToInt())
+	 * 			- EOF atteint inopinément
+	 * @note	Ordre de lecture: token (clé) → arguments → ';'
+	 * 		Exemple: "listen 127.0.0.1:8080;"
+	 * 		où "listen" est passé comme key
 	*/
 	void						_parseServerDirective(const std::string &key, ServerConfig &config);
 	/**
-	 * @brief	Parse une directive de location
-	 * @param	key La clé de la directive
-	 * @param	location La structure LocationConfig a remplir
-	 * @throw	Lance une exception si la directive est invalide
+	 * @brief	Parse une directive au niveau location (bloc "location /path {...}")
+	 * @details	Traite les directives suivantes selon la clé reçue :
+	 * 			- "allowed_methods": Appelle _parseMethodsList() pour extraire les méthodes HTTP
+	 * 			- "root": Extrait le chemin racine spécifique à cette location
+	 * 			- "index": Lit le fichier par défaut pour les répertoires
+	 * 			- "autoindex": Convertit avec _stringToBool() pour activer/désactiver le listing
+	 * 			- "redirect_url": Extrait l'URL cible pour les redirections (301)
+	 * 			- "allow_upload": Convertit avec _stringToBool() pour autoriser/interdire uploads
+	 * 			- "upload_store": Extrait le dossier de destination des uploads
+	 * 			- "cgi_extension": Lit l'extension (.py, .php) et le chemin de l'exécutable CGI
+	 * 			Chaque directive doit se terminer par ';'. Cette fonction est appelée depuis
+	 * 			_parseLocationBlock() lors du traitement du contenu d'un bloc location.
+	 * @param	key La clé de la directive à traiter (ex: "allowed_methods", "root", "cgi_extension")
+	 * @param	location Référence vers la structure LocationConfig à remplir avec les valeurs parsées
+	 * @throw	ConfigParserE si:
+	 * 			- La directive est inconnue
+	 * 			- Un argument obligatoire manque ou est vide
+	 * 			- Le ';' de fin manque
+	 * 			- Une valeur booléenne est invalide (via _stringToBool())
+	 * 			- EOF atteint inopinément
+	 * @note	Ordre de lecture: token (clé) → arguments → ';'
+	 * 		Exemple: "cgi_extension .py /usr/bin/python3;"
+	 * 		où "cgi_extension" est passé comme key
 	*/
 	void						_parseLocationDirective(const std::string &key, LocationConfig &location);
 	/**
-	 * @brief	Parse une liste de methodes HTTP(ex "GET POST DELETE")
-	 * @return	Un vecteur contenant les methodes
+	 * @brief	Parse un bloc "location /path {...}" complet
+	 * @details	Lit d'abord le chemin de la location (ex: "/api", "/uploads").
+	 * 			Valide la présence du '{' d'ouverture.
+	 * 			Puis boucle sur les tokens en utilisant _peekToken() pour vérifier le '}' sans le consommer.
+	 * 			Chaque token de directive est passé à _parseLocationDirective().
+	 * 			Consomme finalement le '}' de fermeture.
+	 * @return	Une structure LocationConfig avec tous les champs parsés
+	 * @throw	ConfigParserE si:
+	 * 			- Le chemin est manquant ou vide
+	 * 			- Le '{' d'ouverture manque
+	 * 			- EOF atteint avant de trouver '}'
+	 * 			- Une directive invalide est rencontrée (via _parseLocationDirective())
+	 * @note	Cette fonction est appelée depuis _parseServerBlock()
+	 * 		pour chaque bloc location imbriqué dans un bloc server
 	*/
-	std::vector<std::string>	_parseMethodsList();
-
+	LocationConfig				_parseLocationBlock();
+	/**
+	 * @brief	Parse un bloc "server {...}" complet
+	 * @details	Valide la présence du '{' d'ouverture.
+	 * 			Initialise les valeurs par défaut (port=0, maxBodySize=0).
+	 * 			Puis boucle en utilisant _peekToken() pour vérifier le '}' sans le consommer:
+	 * 			- Si le token est "location": appelle _parseLocationBlock() et ajoute à locations vector
+	 * 			- Sinon: appelle _parseServerDirective() pour traiter les directives serveur
+	 * 			Consomme finalement le '}' de fermeture.
+	 * @return	Une structure ServerConfig avec tous les champs parsés et locations imbriquées
+	 * @throw	ConfigParserE si:
+	 * 			- Le '{' d'ouverture manque
+	 * 			- EOF atteint avant de trouver '}'
+	 * 			- Une directive invalide est rencontrée (via _parseServerDirective())
+	 * 			- Un bloc location invalide est rencontré (via _parseLocationBlock())
+	 * @note	Cette fonction est appelée depuis parse() pour chaque bloc server
+	 * 		trouvé dans le fichier de configuration
+	*/
+	ServerConfig				_parseServerBlock();
 };

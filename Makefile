@@ -15,6 +15,8 @@ SRCS = webserv.cpp \
 	src/server.cpp \
 	src/ASocket.cpp \
 	src/SocketServer.cpp \
+	src/Config.cpp \
+	src/Exceptions.cpp
 
 # Fichiers objets
 OBJS = $(SRCS:.cpp=.o)
@@ -27,6 +29,7 @@ HEADERS = inc/server.hpp \
 		  inc/Response.hpp \
 		  inc/Config.hpp \
 		  inc/Request.hpp \
+		  inc/Exceptions.hpp
 
 # Règle par défaut
 all: $(NAME)
@@ -50,4 +53,4 @@ fclean: clean
 # Règle pour recompiler
 re: fclean all
 
-.PHONY: all clean fclean re% 
+.PHONY: all clean fclean re%

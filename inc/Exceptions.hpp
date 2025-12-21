@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/21 09:36:07 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 10:14:34 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 13:06:49 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ class	ConfigParserE : public std::exception {
 	public:
 		ConfigParserE(const std::string &msg);
 		virtual const char*	what() const throw();
+		virtual ~ConfigParserE() throw();
 };
 
 /**
@@ -40,6 +41,7 @@ class	RequestE : public std::exception {
 	public:
 		RequestE(const std::string &msg);
 		virtual const char*	what() const throw();
+		virtual ~RequestE() throw();
 };
 
 /**
@@ -53,4 +55,5 @@ class	ResponseE : public std::exception {
 	public:
 		ResponseE(const std::string &msg);
 		virtual const char*	what() const throw();
+		virtual ~ResponseE() throw();
 };
