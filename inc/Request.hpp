@@ -6,13 +6,16 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 12:49:52 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 14:17:10 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 17:06:01 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
+#include <iostream>
 #include <string>
+#include <cctype>
+#include <cstdlib>
 #include "Exceptions.hpp"
 
 #define MAX_HEADERS 50
