@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 17:55:27 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 11:02:03 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 12:02:43 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,9 @@
 
 	/**
 	* @brief	Contient toute la configuration pour une route spécifique (un bloc "location")
-	* ---> Chaque fois qu'une requete arrive, le serveur trouve la configuration qui correspond
-	* a l'URI (uniform resource identifier : page web, photo, video...) demandée pour savoir
-	* comment la traiter ensuite.
+	* 		Chaque fois qu'une requete arrive, le serveur trouve la configuration qui correspond
+	* 		a l'URI (uniform resource identifier : page web, photo, video...) demandée pour savoir
+	* 		comment la traiter ensuite.
 	* */
 
 struct	LocationConfig {
@@ -78,8 +78,8 @@ struct	LocationConfig {
 
 /**
  * @brief	Contient la config complete pour un serveur virtuel (un bloc "server").
- * 	Chaque instance de cette structure represente un serveur qui ecoute sur un port specifique et possede son propre
- * 	ensemble de règles.
+ * 			Chaque instance de cette structure represente un serveur qui ecoute sur un port specifique et possede son propre
+ * 			ensemble de règles.
  */
 struct	ServerConfig {
 	/**
@@ -108,14 +108,14 @@ struct	ServerConfig {
 	/**
 	 *	@brief	Bonus : liste de noms de domaines pour ce serveur.
 	 *	@details Permet de faire du virtual hosting: plusieurs sites sur le meme port, différencié par le header host
-	 	de la requete.
+	 			de la requete.
 	 */
 	std::vector<std::string>	serverNames;
 };
 
 /**
  * @brief	Classe responsable du parsing du fichier de configuration.
- * 	Elle lit le fichier de configuration, valide sa syntaxe, et remplit une liste de structures ServerConfig avec les parametres lus.
+ * 			Elle lit le fichier de configuration, valide sa syntaxe, et remplit une liste de structures ServerConfig avec les parametres lus.
  */
 
 class	ConfigParser {
@@ -166,6 +166,33 @@ private:
 	*/
 	void						_skipSpacesAndC();
 	/**
+	 * @brief	Genere un message d'erreur avec le numero de la ligne
+	 * @param	msg Le message d'erreur
+	 * @details	Formate le message en ajoutant le numéro de la ligne actuelle (_lineNumber)
+	 * 			au début du message. Utile pour aider l'utilisateur à localiser les erreurs.
+	 * @return	Un message formaté avec le numero de la ligne
+	*/
+	std::string					_formatErrorMsg(const std::string &msg);
+	/**
+	 * @brief	Convertit une chaine en entier
+	 * @param	str La chaine a convertir
+	 * @return	La valeur entiere
+	 * @details	Valide que tous les caractères sont des chiffres.
+	 * 			Puis convertit la chaîne en entier long.
+	 * 			Vérifie que la valeur est entre 0 et 65535 (plage valide des ports).
+	 * @throw	Lance une exception si la conversion echoue
+	*/
+	int							_stringToInt(const std::string &str);
+	/**
+	 * @brief	Convertit une chaine en booléen(on/off, true/false, yes/no)
+	 * @param	str	La chaine a convertir
+	 * @details	Accepte les formats suivants :
+	 * 			- true : "on", "true", "yes", "1"
+	 * 			- false : "off", "false", "no", "0"
+	 * @return	La valeur booléenne
+	*/
+	bool						_stringToBool(const std::string &str);
+	/**
 	 * @brief	Lit le prochain token(valeur, keyword, symbole)
 	 * @details	Saute d'abord les espaces, tabulations, commentaires et newlines.
 	 * 			Puis extrait le prochain token : un mot (lettres/chiffres/underscores),
@@ -176,9 +203,34 @@ private:
 	std::string					_readToken();
 	/**
 	 * @brief	Regarde le prochain token sans le consommer
+	 * @details	Sauvegarde la position actuelle (_position), appelle _readToken()
+	 * 			pour lire le token suivant, puis restaure la position initiale.
+	 * 			Permet de vérifier ce qui vient sans modifier l'état du parseur.
 	 * @return	Le token suivant
 	*/
 	std::string					_peekToken();
+	/**
+	 * @brief	Parse une directive "listen" au format "IP:PORT"
+	 * @details	Cette fonction extrait l'adresse IP et le port d'une chaîne formatée comme "127.0.0.1:8080".
+	 * 			Elle utilise std::string::find() pour localiser le séparateur ':',
+	 * 			puis std::string::substr() pour découper la chaîne en deux parties.
+	 * 			Valide que ni l'IP ni le port ne sont vides, puis utilise _stringToInt()
+	 * 			pour convertir et valider le port (plage 0-65535).
+	 * @param	listenStr La chaine a parser
+	 * @param	host Référence vers une std::string pour stocker l'adresse IP extraite
+	 * @param	port Référence vers un int pour stocker le port converti et validé
+	 * @throw	ConfigParserE si le format est invalide:
+	 * 			- Si ':' n'est pas trouvé (format incorrect)
+	 * 			- Si l'IP est vide (avant ':')
+	 * 			- Si le port est vide (après ':')
+	 * 			- Si le port n'est pas numérique ou hors plage (via _stringToInt())
+	 * @note	Cette fonction est appelée par _parseServerDirective() lors du traitement
+	 * 			de la directive "listen"
+	*/
+	void						_parseListenDirective(const std::string &listenStr, std::string &host, int &port);
+
+
+
 	/**
 	 * @brief	Parse un bloc "server {...}"
 	 * @return	Une structurer ServerConfig remplie
@@ -210,31 +262,5 @@ private:
 	 * @return	Un vecteur contenant les methodes
 	*/
 	std::vector<std::string>	_parseMethodsList();
-	/**
-	 * @brief	Convertit une chaine en entier
-	 * @param	str La chaine a convertir
-	 * @return	La valeur entiere
-	 * @throw	Lance une exception si la conversion echoue
-	*/
-	int							_stringToInt(const std::string &str);
-	/**
-	 * @brief	Convertit une chaine en booléen(on/off, true/false, yes/no)
-	 * @param	str	La chaine a convertir
-	 * @return	La valeur booléenne
-	*/
-	bool						_stringToBool(const std::string &str);
-	/**
-	 * @brief	Parse une directive "listen" (ex: "127.0.0.1:8080")
-	 * @param	listenStr La chaine a parser
-	 * @param	host Reference pour stocker l'IP
-	 * @param	port Reference pour stocker le port
-	 * @throw	Lance ne exception si le format est invalide
-	*/
-	void						_parseListenDirective(const std::string &listenStr, std::string &host, int &port);
-	/**
-	 * @brief	Genere un message d'erreur avec le numero de la ligne
-	 * @param	msg Le message d'erreur
-	 * @return	Un message formaté avec le numero de la ligne
-	*/
-	std::string					_formatErrorMsg(const std::string &msg);
+
 };
