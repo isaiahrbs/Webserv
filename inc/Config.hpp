@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 17:55:27 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 13:26:57 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 14:28:27 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include "Exceptions.hpp"
 
 	/**
+	* @struct	LocationConfig
 	* @brief	Contient toute la configuration pour une route spécifique (un bloc "location")
 	* 		Chaque fois qu'une requete arrive, le serveur trouve la configuration qui correspond
 	* 		a l'URI (uniform resource identifier : page web, photo, video...) demandée pour savoir
@@ -63,10 +64,17 @@ struct	LocationConfig {
 	std::string							redirectUrl;
 	/**
 	 * @brief	Active ou desactive la possibilité d'upload des fichiers sur cette route.
+	* @details	Si true, les clients peuvent envoyer des fichiers (POST/PUT).
+	* 			Si false, toute tentative d'upload retourne une erreur 405 "Method Not Allowed".
+	* 			Valeur par défaut: false
 	 */
 	bool								allowUpload;
 	/**
 	 * @brief	Le dossier sur le disque ou les fichiers uploadé doivent etre sauvegardés.
+	* @details	Chemin absolu ou relatif au répertoire de travail du serveur.
+	* 			Exemple: "./uploads", "/var/www/uploads", "www/server1/uploads"
+	* 			Ignoré si allowUpload est false.
+	* 			Doit avoir les permissions d'écriture pour le serveur.
 	 */
 	std::string							uploadStore;
 	/**
@@ -77,29 +85,60 @@ struct	LocationConfig {
 	std::map<std::string, std::string>	cgiHandlers;
 };
 
-	/**
+	 /**
+	 * @struct	ServerConfig
 	 * @brief	Contient la config complete pour un serveur virtuel (un bloc "server").
 	 * 			Chaque instance de cette structure represente un serveur qui ecoute sur un port specifique et possede son propre
 	 * 			ensemble de règles.
-	*/
+	 * @details	Chaque instance représente un serveur indépendant qui:
+	 * 			- Écoute sur un port et une adresse IP spécifiques
+	 * 			- Possède ses propres règles et chemins racine
+	 * 			- Gère plusieurs routes (locations) avec des configurations différentes
+	 * 			- Définit ses propres pages d'erreur personnalisées
+	 *
+	 * 			Un même port peut héberger plusieurs serveurs virtuels,
+	 * 			différenciés par l'en-tête Host de la requête (serverNames).
+	 */
+
 struct	ServerConfig {
-	/**
+	 /**
 	 * @brief	le port sur lequel ce serveur ecoute les connexions entrantes.
+	 * @details	Plage valide: 1-65535 (0 est réservé, <1024 nécessite root).
+	 * 			Exemples courants: 80 (HTTP), 8080, 3000, 5000
+	 * 			Plusieurs serveurs peuvent partager le même port s'ils ont des Host différents.
 	 */
 	int							port;
-	/**
-	 * @brief	l'adresse IP sur laquelle le serveur ecoute.
-	 * @details	Souvent 127.0.0.1 (localhost) ou 0.0.0.0 (toutes les interfaces)
+	 /**
+	 * @brief	L'adresse IP sur laquelle le serveur écoute.
+	 * @details	Exemples:
+	 * 			- "127.0.0.1" (localhost, uniquement accès local)
+	 * 			- "0.0.0.0" (toutes les interfaces, accessible de partout)
+	 * 			- "192.168.1.100" (interface spécifique du réseau)
+	 *
+	 * 			Si plusieurs serveurs partagent port+host, serverNames les différencie.
 	 */
 	std::string					host;
-	/**
-	* @brief	Le répertoire racine du serveur (ex: www/server1/).
-	* @details	Chemin de base à partir duquel le serveur servira les fichiers.
-	*/
+	 /**
+	 * @brief	Le répertoire racine du serveur.
+	 * @details	Chemin de base à partir duquel le serveur servira les fichiers.
+	 * 			Exemple: "www/server1/", "./html/", "/var/www/mysite/"
+	 *
+	 * 			Si l'URI est "/images/logo.png" et root est "www/server1/",
+	 * 			le serveur cherchera: "www/server1/images/logo.png"
+	 *
+	 * 			Peut être surchargé par la location spécifique.
+	 */
 	std::string					root;
-	/**
-	 * @brief	La taille maximale autorisée pour le corps d'une requete client, en octets.
-	 * @details	Si une requete depasse cette taille, le serveur doit renvoyer une erreur 413 Payload Too large.
+	 /**
+	 * @brief	La taille maximale autorisée pour le corps d'une requête client (en octets).
+	 * @details	Protège contre les uploads/POST trop volumineux.
+	 * 			Exemple: 1048576 = 1 MB, 10485760 = 10 MB
+	 *
+	 * 			Si une requête dépasse cette limite:
+	 * 			- Réponse HTTP 413 "Payload Too Large"
+	 * 			- La requête est rejetée
+	 *
+	 * 			Valeur par défaut (si non spécifié): généralement 1 MB
 	 */
 	long						maxBodySize;
 	/**
@@ -109,17 +148,34 @@ struct	ServerConfig {
 	std::map<int, std::string>	errorPages;
 	/**
 	 * @brief	Une liste de toutes les configurations de routes (location) pour ce serveur.
+	* @details	Chaque LocationConfig représente un bloc "location" du fichier config.
+	 * 			Contient: path, root, allowedMethods, index, autoIndex, redirectUrl,
+	 * 			allowUpload, uploadStore, cgiHandlers.
+	 * 			Le serveur trouve la location correspondant au chemin demandé pour traiter la requête.
+	 * @note	L'ordre des locations peut être important pour le matching.
 	 */
 	std::vector<LocationConfig>	locations;
-	/**
-	 *	@brief	Bonus : liste de noms de domaines pour ce serveur.
-	 *	@details Permet de faire du virtual hosting: plusieurs sites sur le meme port, différencié par le header host
-	 			de la requete.
+	 /**
+	 * @brief	Bonus: liste de noms de domaines pour ce serveur (virtual hosting).
+	 * @details	Permet d'héberger plusieurs sites sur le même port.
+	 * 			Différenciés par l'en-tête "Host" de la requête HTTP.
+	 *
+	 * 			Exemple: ["example.com", "www.example.com", "api.example.com"]
+	 *
+	 * 			Processus:
+	 * 			1. Client envoie requête avec "Host: example.com"
+	 * 			2. Serveur cherche le port/host correspondant
+	 * 			3. Puis cherche dans serverNames si ce domaine est listé
+	 * 			4. Si oui, utilise cette configuration ServerConfig
+	 * 			5. Si non, refuse ou utilise une config par défaut
+	 *
+	 * 			Vide si virtual hosting non utilisé.
 	 */
 	std::vector<std::string>	serverNames;
 };
 
 /**
+ * @class	ConfigParser
  * @brief	Classe responsable du parsing du fichier de configuration.
  * 			Elle lit le fichier de configuration, valide sa syntaxe, et remplit une liste de structures ServerConfig avec les parametres lus.
  */
@@ -155,16 +211,23 @@ private:
 	//		ATTRIBUTS
 
 	/**
-	 * @brief	Le contenu complet du fichier
-	 */
+	* @brief	Le contenu complet du fichier de configuration lu
+	* @details	Chaque ligne terminée par \n. Utilisé comme source de parsing.
+	* 			Exemple: "server {\n\tlisten 127.0.0.1:8080;\n}\n"
+	*/
 	std::string					_fileContent;
 	/**
-	 * @brief	Position actuelle dans le fichier
-	 */
+	* @brief	Position actuelle du curseur dans _fileContent
+	* @details	Index du prochain caractère à lire. Commence à 0.
+	* 			Incrémenté par _readToken(). Utilisé par _peekToken().
+	* 			Atteint _fileContent.length() à EOF.
+	*/
 	size_t						_position;
 	/**
-	 * @brief	Numero de ligne pour les msgs d'erreur
-	 */
+	* @brief	Numéro de la ligne actuelle (pour les erreurs)
+	* @details	Commence à 1. Incrémenté à chaque '\n' rencontré.
+	* 			Utilisé par _formatErrorMsg() pour afficher: "Line X: erreur"
+	*/
 	int							_lineNumber;
 
 	//		METHODES

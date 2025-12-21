@@ -1,1 +1,33 @@
 fix bugs, make run server work and learn select()
+
+
+START
+│
+├─ [1] ConfigParser.parse("server.conf")
+│        └─ Charge config en mémoire ✅ FAIT - TRY TO DESTROY !!
+│
+├─ [2] Crée SocketServer pour chaque port  -->ISA
+│
+├─ [3] Écoute sur les ports (select())    -->ISA
+│
+└─ BOUCLE INFINIE :
+	│
+	├─ Client envoie requête HTTP brute
+	│
+	├─ [4] Request.parse(rawData)    -->DIM
+	│        └─ Extrait method, uri, headers, body
+	│
+	├─ [5] Cherche le bon serveur/location dans la config   -->DIM
+	│        └─ Logique à implémenter
+	│
+	├─ [6] Traite selon la config    -->DIM
+	│        ├─ Serve file statique
+	│        ├─ Execute CGI
+	│        ├─ Redirect
+	│        └─ Error pages
+	│
+	├─ [7] Response.build()   -->DIM
+	│        └─ Sérialise en HTTP
+	│
+	└─ [8] Envoie réponse au client   --> ISA
+
