@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 17:55:27 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 09:19:36 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 09:34:08 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,15 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <exception>
 
-/**
- * @brief	Contient toute la configuration pour une route spécifique (un bloc "location")
- * ---> Chaque fois qu'une requete arrive, le serveur trouve la configuration qui correspond
- * a l'URI (uniform resource identifier : page web, photo, video...) demandée pour savoir
- * comment la traiter ensuite.
- * */
+	/**
+	* @brief	Contient toute la configuration pour une route spécifique (un bloc "location")
+	* ---> Chaque fois qu'une requete arrive, le serveur trouve la configuration qui correspond
+	* a l'URI (uniform resource identifier : page web, photo, video...) demandée pour savoir
+	* comment la traiter ensuite.
+	* */
+
 struct	LocationConfig {
 	/**
 	 * @brief	Le chemin de l'URL de la configuration concernée
@@ -134,15 +136,15 @@ private:
 	/**
 	 * @brief	Le contenu complet du fichier
 	 */
-	std::string			_fileContent;
+	std::string					_fileContent;
 	/**
 	 * @brief	Position actuelle dans le fichier
 	 */
-	size_t				_position;
+	size_t						_position;
 	/**
 	 * @brief	Numero de ligne pour les msgs d'erreur
 	 */
-	int					_lineNumber;
+	int							_lineNumber;
 
 	//		METHODES
 
@@ -151,31 +153,77 @@ private:
 	 * @param	filepath Le chemin vers le fichier
 	 * @throw	Lance une exception si le fichier n'est pas ouvert
 	 */
-	void				_readFile(const std::string &filepath);
+	void						_readFile(const std::string &filepath);
 	/**
 	 * @brief	Saute lesespaces, tabulations et commentaires #
 	*/
-	void				_skipSpacesAndC();
+	void						_skipSpacesAndC();
 	/**
 	 * @brief	Lit le prochain token(valeur, keyword, symbole)
 	 * @return	Le token lu, ou une chaine vide si EOF
 	*/
-	std::string			_readToken();
+	std::string					_readToken();
 	/**
 	 * @brief	Regarde le prochain token sans le consommer
 	 * @return	Le token suivant
 	*/
-	std::string			_peekToken();
+	std::string					_peekToken();
 	/**
 	 * @brief	Parse un bloc "server {...}"
 	 * @return	Une structurer ServerConfig remplie
 	 * @throw	Lance une exception en cas d'erreur de syntaxe
 	*/
-	ServerConfig		_parseServerBlock();
+	ServerConfig				_parseServerBlock();
 	/**
 	 * @brief	Parse un bloc "locatoin /path {...}"
 	 * @return	Une structure LocationConfig remplie
 	 * @throw	Lance une exception en cas d'erreur de syntaxe
 	*/
-	LocationConfig		_parseLocationBlock();
+	LocationConfig				_parseLocationBlock();
+	/**
+	 * @brief	Parse une directive simple (ex "listen 127.0.0.1:8080;")
+	 * @param	key La clé de la directive (ex "listen")
+	 * @param	config La structure ServerConfig a remplir
+	 * @throw	Lance une exception si la directive est invalide
+	*/
+	void						_parseServerDirective(const std::string &key, ServerConfig &config);
+	/**
+	 * @brief	Parse une directive de location
+	 * @param	key La clé de la directive
+	 * @param	location La structure LocationConfig a remplir
+	 * @throw	Lance une exception si la directive est invalide
+	*/
+	void						_parseLocationDirective(const std::string &key, LocationConfig &location);
+	/**
+	 * @brief	Parse une liste de methodes HTTP(ex "GET POST DELETE")
+	 * @return	Un vecteur contenant les methodes
+	*/
+	std::vector<std::string>	_parseMethodsList();
+	/**
+	 * @brief	Convertit une chaine en entier
+	 * @param	str La chaine a convertir
+	 * @return	La valeur entiere
+	 * @throw	Lance une exception si la conversion echoue
+	*/
+	int							_stringToInt(const std::string &str);
+	/**
+	 * @brief	Convertit une chaine en booléen(on/off, true/false, yes/no)
+	 * @param	str	La chaine a convertir
+	 * @return	La valeur booléenne
+	*/
+	bool						_stringToBool(const std::string &str);
+	/**
+	 * @brief	Parse une directive "listen" (ex: "127.0.0.1:8080")
+	 * @param	listenStr La chaine a parser
+	 * @param	host Reference pour stocker l'IP
+	 * @param	port Reference pour stocker le port
+	 * @throw	Lance ne exception si le format est invalide
+	*/
+	void						_parseListenDirective(const std::string &listenStr, std::string &host, int &port);
+	/**
+	 * @brief	Genere un message d'erreur avec le numero de la ligne
+	 * @param	msg Le message d'erreur
+	 * @return	Un message formaté avec le numero de la ligne
+	*/
+	std::string					_formatErrorMsg(const std::string &msg);
 };
