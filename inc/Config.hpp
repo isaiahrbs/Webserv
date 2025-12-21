@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 17:55:27 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/07 19:00:59 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 09:19:36 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,5 +129,53 @@ public:
 
 private:
 
-	/** @brief			LOADING....  */
+	//		ATTRIBUTS
+
+	/**
+	 * @brief	Le contenu complet du fichier
+	 */
+	std::string			_fileContent;
+	/**
+	 * @brief	Position actuelle dans le fichier
+	 */
+	size_t				_position;
+	/**
+	 * @brief	Numero de ligne pour les msgs d'erreur
+	 */
+	int					_lineNumber;
+
+	//		METHODES
+
+	/**
+	 * @brief	Lit le contenu du fichier dans _fileContent;
+	 * @param	filepath Le chemin vers le fichier
+	 * @throw	Lance une exception si le fichier n'est pas ouvert
+	 */
+	void				_readFile(const std::string &filepath);
+	/**
+	 * @brief	Saute lesespaces, tabulations et commentaires #
+	*/
+	void				_skipSpacesAndC();
+	/**
+	 * @brief	Lit le prochain token(valeur, keyword, symbole)
+	 * @return	Le token lu, ou une chaine vide si EOF
+	*/
+	std::string			_readToken();
+	/**
+	 * @brief	Regarde le prochain token sans le consommer
+	 * @return	Le token suivant
+	*/
+	std::string			_peekToken();
+	/**
+	 * @brief	Parse un bloc "server {...}"
+	 * @return	Une structurer ServerConfig remplie
+	 * @throw	Lance une exception en cas d'erreur de syntaxe
+	*/
+	ServerConfig		_parseServerBlock();
+	/**
+	 * @brief	Parse un bloc "locatoin /path {...}"
+	 * @return	Une structure LocationConfig remplie
+	 * @throw	Lance une exception en cas d'erreur de syntaxe
+	*/
+	LocationConfig		_parseLocationBlock();
 };
