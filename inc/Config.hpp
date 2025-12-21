@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/07 17:55:27 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 09:37:11 by dinguyen         ###   ########.fr       */
+/*   Updated: 2025/12/21 11:02:03 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,10 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include "Exceptions.hpp"
 
 	/**
 	* @brief	Contient toute la configuration pour une route spécifique (un bloc "location")
@@ -150,15 +154,23 @@ private:
 	/**
 	 * @brief	Lit le contenu du fichier dans _fileContent;
 	 * @param	filepath Le chemin vers le fichier
+	 * @details	Ouvre le fichier ligne par ligne et le concatène dans _fileContent.
+	 * 			Chaque ligne est suivie d'un newline pour préserver la structure.
+	 * 			Incrémente _lineNumber pour chaque newline rencontré.
 	 * @throw	Lance une exception si le fichier n'est pas ouvert
 	 */
 	void						_readFile(const std::string &filepath);
 	/**
 	 * @brief	Saute lesespaces, tabulations et commentaires #
+	 * @details Incrémente _lineNumber pour chaque newline rencontré
 	*/
 	void						_skipSpacesAndC();
 	/**
 	 * @brief	Lit le prochain token(valeur, keyword, symbole)
+	 * @details	Saute d'abord les espaces, tabulations, commentaires et newlines.
+	 * 			Puis extrait le prochain token : un mot (lettres/chiffres/underscores),
+	 * 			un symbole spécial ({, }, ;, :), ou une chaîne entre guillemets.
+	 * 			Incrémente _position pour pointer après le token lu.
 	 * @return	Le token lu, ou une chaine vide si EOF
 	*/
 	std::string					_readToken();
