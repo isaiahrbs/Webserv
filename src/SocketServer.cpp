@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <cstring>
+#include <cerrno>
 
 SocketServer::SocketServer(int port, int maxUsers) : ASocket(port) {
 	_fd = -1;
@@ -55,12 +56,19 @@ void	SocketServer::listenSocket() {
 		throw socketException("listen");
 }
 
-int	SocketServer::acceptClient() {
-	int	new_socket;
-	int addrlen = sizeof(_addr);
+SocketClient*	SocketServer::acceptClient() {
+	struct sockaddr_in  client_addr;
+	socklen_t           addrlen = sizeof(client_addr);
+	
+	int new_socket_fd = accept(_fd, (struct sockaddr *)&client_addr, &addrlen);
+	if (new_socket_fd < 0) {
+			// En mode non-bloquant, accept peut retourner -1 si aucune connexion n'est en attente.
+			// On ne lance pas d'exception ici, on retourne simplement nullptr.
+		if (errno == EWOULDBLOCK || errno == EAGAIN)
+			return (NULL);
+		throw socketException("Error: accept failed");
+	}
 
-	new_socket = accept(_fd, (struct sockaddr *)&_addr, (socklen_t*)&addrlen);
-	if (new_socket < 0)
-		throw socketException("Error: accept");
-	return new_socket;
+	std::cout << "New connection accepted on fd " << new_socket_fd << std::endl;
+	return (new SocketClient(new_socket_fd, client_addr));
 }

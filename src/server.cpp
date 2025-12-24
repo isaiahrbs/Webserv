@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 
-server::server(int port) : _port(port), _maxUsers(16), _listeningSocket(0) {
+server::server(int port) : _port(port), _maxUsers(1024), _listeningSocket(0) {
 	this->_listeningSocket = new SocketServer(_port, _maxUsers);
 }
 
@@ -31,6 +31,10 @@ void	server::setup_socket() {
 	_listeningSocket->listenSocket();
 }
 
+/*
+	• Activity nous dis si il y a de l'activité mais pour savoir exactement ce qu'il se passe
+		on utilise la fonction FD_ISSET() pour savoir exactement si jappelle acceptClient ou recvData()
+*/
 void	server::run() {
 	fd_set	read_fds;
 	int		max_fd;
