@@ -15,6 +15,7 @@ SRCS = webserv.cpp \
 	src/server.cpp \
 	src/ASocket.cpp \
 	src/SocketServer.cpp \
+	src/SocketClient.cpp \
 	src/Config.cpp \
 	src/Exceptions.cpp
 
