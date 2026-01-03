@@ -3,6 +3,8 @@
 #include <iostream>
 #include <unistd.h>
 #include <errno.h>
+#include <fstream>
+#include <sstream>
 
 server::server(int port) : _port(port), _maxUsers(1024), _listeningSocket(0) {
 	this->_listeningSocket = new SocketServer(_port, _maxUsers);
@@ -31,6 +33,8 @@ void	server::setup_socket() {
 	_listeningSocket->bindSocket();
 	_listeningSocket->listenSocket();
 }
+
+
 
 /*
 	• Activity nous dis si il y a de l'activité mais pour savoir exactement ce qu'il se passe
@@ -110,6 +114,37 @@ void	server::run() {
 				}
 				std::string payload(buf, buf + n);
 				std::cout << "Received from fd " << client_fd << ": " << payload << std::endl;
+
+				// -- Minimal static file serving: always reply with index.html --
+				std::string body;
+				std::ifstream file("/home/isaiah/Downloads/random.html");
+				if (file) {
+					std::ostringstream ss;
+					ss << file.rdbuf();
+					body = ss.str();
+				}
+				std::ostringstream response;
+				if (body.empty()) {
+					body = "<html><body><h1>404 Not Found</h1></body></html>";
+					response << "HTTP/1.1 404 Not Found\r\n";
+				} else {
+					response << "HTTP/1.1 200 OK\r\n";
+				}
+				response << "Content-Type: text/html; charset=UTF-8\r\n";
+				response << "Content-Length: " << body.size() << "\r\n";
+				response << "Connection: close\r\n\r\n";
+				response << body;
+
+				std::string raw = response.str();
+				send(client_fd, raw.c_str(), raw.size(), 0);
+				close(client_fd);
+				delete client_ptr;
+				std::map<int, SocketClient*>::iterator next = it;
+				++next;
+				clients.erase(it);
+				it = next;
+				continue;
+				// end
 			}
 			++it;
 		}
