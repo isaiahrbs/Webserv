@@ -96,8 +96,11 @@ void	server::run() {
 			SocketClient*	client_ptr = it->second;
 
 			if (FD_ISSET(client_fd, &read_fds)) {
-				char buf[4096];
+				char buf[4096]; // Buffer de 4KB
+				// recv() = Lit les données du client
 				ssize_t n = recv(client_fd, buf, sizeof(buf), 0);
+
+				// si client a fermer la connexion (fermer naviguateur)
 				if (n == 0) {
 					close(client_fd);
 					delete client_ptr;
@@ -107,6 +110,8 @@ void	server::run() {
 					it = next;
 					continue;
 				}
+
+				// si erreur
 				if (n < 0) {
 					if (errno == EAGAIN || errno == EWOULDBLOCK) {
 						++it;
