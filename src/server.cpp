@@ -46,13 +46,19 @@ void	server::run() {
 
 	while (true) {
 
-		// met la liste a 0
+		// met la liste des fds a 0
 		FD_ZERO(&read_fds);
 
 		// commence a surveiller si des connection veulent communiquer a ce fd
+		/*
+		fd set ca permet de dire "le chiffre que je donne en premier 
+		parametre c'est un fd a surveiller parmis la liste que je donne en 
+		2eme parametre" et quand c executer c sauvegarder klkpart dans 
+		lordinateur que c des fd a regarder si ils ont besoin de klkchose
+		*/
 		int listening_fd = this->_listeningSocket->getFd();
 		FD_SET(listening_fd, &read_fds);
-		max_fd = listening_fd;
+		max_fd = listening_fd; // max fd sert a savoir combien de fd il faut surveiller (pour select)
 		// loop through all to add them in list
 
 		std::cout << "Looking for activity..." << std::endl;
@@ -63,10 +69,11 @@ void	server::run() {
 			int client_fd = it->first;
 			FD_SET(client_fd, &read_fds);
 			if (client_fd > max_fd) {
-				max_fd = client_fd;
+				max_fd = client_fd;// augemente la limite si ya des fds
 			}
 		}
 
+		// le programme sarrete ici si il y a aucune activité et il attend, 0% CPU usage
 		int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
 
 		if (activity < 0) {
@@ -74,7 +81,8 @@ void	server::run() {
 			break;
 		}
 
-		// accepte les nouvelles connecxions quand FD_ISSET est vrai
+		// FD_ISSET regarde "c'est quel fd précisément"
+		// si c'est de l'activité sur le listening fd il faut accepter la nouvelle entrée
 		if (FD_ISSET(listening_fd, &read_fds)) {
 			SocketClient* newClient = _listeningSocket->acceptClient();
 			if (newClient) {
