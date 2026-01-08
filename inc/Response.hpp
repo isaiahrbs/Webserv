@@ -6,17 +6,18 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 13:06:22 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/03 13:20:44 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/08 19:40:42 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <string>
-
+# include <string>
+# include <sstream>
 # define MAX_HEADERS 50
 
 class	Response {
+
 
 private:
 	std::string	_version;
