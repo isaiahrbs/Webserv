@@ -6,13 +6,13 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 19:10:09 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/08 19:56:00 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/09 10:30:05 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-Response::Response() : _version("HTTP/1.1"), _statusCode(0), _headercount(0) {}
+Response::Response() : _version("HTTP/1.1"), _statusCode(0), _headerCount(0) {}
 Response::~Response() {}
 
 void	Response::setVersion(const std::string &version) {

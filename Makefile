@@ -17,7 +17,9 @@ SRCS = webserv.cpp \
 	src/SocketServer.cpp \
 	src/SocketClient.cpp \
 	src/Config.cpp \
-	src/Exceptions.cpp
+	src/Exceptions.cpp \
+	src/Request.cpp \
+	src/Response.cpp
 
 # Fichiers objets
 OBJS = $(SRCS:.cpp=.o)
