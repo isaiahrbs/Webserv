@@ -34,6 +34,10 @@ bool SocketClient::isConnected() const {
 	return this->isOpen();
 }
 
-std::string& SocketClient::getBuffer() {
-	return buffer;
+std::string& SocketClient::getRequestBuffer() {
+	return _requestBuffer;
+}
+
+std::string& SocketClient::getResponseBuffer() {
+	return _responseBuffer;
 }

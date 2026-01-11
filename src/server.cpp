@@ -192,12 +192,12 @@ void	server::run() {
 					si j'ai eu la requete en entier.
 					je l'append dans un std::string car std::string grandit tout seul
 				*/
-				client_ptr->getBuffer().append(buf, bytes_read);
+				client_ptr->getRequestBuffer().append(buf, bytes_read);
 
 				// je check ici si la requete est finis en cherchant "\r\n\r\n"
-				if (client_ptr->getBuffer().find("\r\n\r\n") != std::string::npos) { // je check si la request est pas finis
+				if (client_ptr->getRequestBuffer().find("\r\n\r\n") != std::string::npos) { // je check si la request est pas finis
 
-					std::cout << "FULL REQUEST: " << client_ptr->getBuffer() << std::endl << std::endl;
+					std::cout << "FULL REQUEST: " << client_ptr->getRequestBuffer() << std::endl << std::endl;
 
 					// !! ici c'est pour toi Dim, tu peux faire tes envoie de requetes
 					std::string payload(buf, buf + bytes_read);
@@ -227,7 +227,7 @@ void	server::run() {
 					send(client_fd, raw.c_str(), raw.size(), 0);
 
 					// on vide le buffer du client
-					client_ptr->getBuffer().clear();
+					client_ptr->getRequestBuffer().clear();
 				}
 				else { // REQUETE INCOMPLETE
 					std::cout << "user: " << client_fd << " has slow connexion, comming back to him later." << std::endl;

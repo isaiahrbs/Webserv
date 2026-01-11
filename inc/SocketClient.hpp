@@ -6,7 +6,7 @@
 /*   By: irobinso <irobinso@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 11:33:58 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/11 07:54:55 by irobinso         ###   ########.fr       */
+/*   Updated: 2026/01/11 11:34:58 by irobinso         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,8 @@
 
 class	SocketClient : public ASocket {
 private:
-	std::string buffer;
+	std::string _requestBuffer;
+	std::string _responseBuffer;
 
 public:
 	SocketClient(int fd, struct sockaddr_in addr);
@@ -28,6 +29,7 @@ public:
 	ssize_t		recvData(void* buf, size_t len);
 	bool		isConnected() const;
 
-	std::string& getBuffer();
+	std::string& getRequestBuffer();
+	std::string& getResponseBuffer();
 
 };
