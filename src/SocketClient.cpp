@@ -33,3 +33,7 @@ ssize_t SocketClient::recvData(void* buf, size_t len) {
 bool SocketClient::isConnected() const {
 	return this->isOpen();
 }
+
+std::string& SocketClient::getBuffer() {
+	return buffer;
+}

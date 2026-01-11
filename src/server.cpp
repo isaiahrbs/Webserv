@@ -46,34 +46,72 @@ void	server::run() {
 
 	while (true) {
 
-		// met la liste des fds a 0
+		// vide la liste des FDs
 		FD_ZERO(&read_fds);
 
-		// commence a surveiller si des connection veulent communiquer a ce fd
-		/*
-		fd set ca permet de dire "le chiffre que je donne en premier 
-		parametre c'est un fd a surveiller parmis la liste que je donne en 
-		2eme parametre" et quand c executer c sauvegarder klkpart dans 
-		lordinateur que c des fd a regarder si ils ont besoin de klkchose
+		/*		
+			FD_SET permet d'ajouter un FD dans une liste de fd (fd_set)
+			on ajoute le FD du serveur dedans read_fds qui va nous être utile just après
 		*/
 		int listening_fd = this->_listeningSocket->getFd();
 		FD_SET(listening_fd, &read_fds);
-		max_fd = listening_fd; // max fd sert a savoir combien de fd il faut surveiller (pour select)
-		// loop through all to add them in list
+		/*
+			on met le max_fd = a listening_fd car listening_fd est le fd le plus grand
+			pour l'instant.
+			
+			(default fd = fd mis par le kernel automatiquement)
+			fds:
+			0• stdin			| default fd
+			1• stdout			| default fd
+			2• stderr			| default fd
+			-> 3• listening_fd
+
+			on ajoute le listening_fd apres les autres donc c'est le plus grand
+			en ce moment.
+			plus tard quand les autres fds vont venir on va ajouter +1 a max_fds
+			et -1 quand ils partent, max_fd c'est savoir combien ya de fd dans le server
+
+		*/
+		max_fd = listening_fd;
 
 		std::cout << "Looking for activity..." << std::endl;
 
-		// j'ajoute tout les fds dans le read_fds list
+		/*
+			on ajoute tous les fds dans la liste fd (read_fds) avec FD_SET
+			rappelle: FD_SET permet d'ajouter des fds dans une liste d'FDs
+
+			int client_fd = it_first c'est normal,
+			le std::map clients, chaque clients a 2 choses:
+				• int fd;
+				• SocketClient (l'objet)
+					- std::map<int, SocketClient*> clients
+			on peut savoir quel objet appartient a qui, le fd est avec l'objet SocketClient
+		*/
 		std::map<int, SocketClient*>::iterator it;
 		for (it = clients.begin(); it != clients.end(); ++it) {
 			int client_fd = it->first;
 			FD_SET(client_fd, &read_fds);
+			
+			/*
+				si il y a un client avec un fd plus grand que max_fd
+				ca veut dire que ya un nouveau client et donc on augemente le max_fd
+
+				0• stdin			| default fd
+				1• stdout			| default fd
+				2• stderr			| default fd
+				3• listening_fd
+				-> 4• client_fd
+			*/
 			if (client_fd > max_fd) {
 				max_fd = client_fd;// augemente la limite si ya des fds
 			}
 		}
 
-		// le programme sarrete ici si il y a aucune activité et il attend, 0% CPU usage
+		/*
+			avec tous les fds ajouter dedans la liste read_fds, on passe cette liste a select().
+			select() va checker et regarder ceux qui ont besoin de traitement, il garde
+			que ceux qui ont besoin de traitement, le reste c'est enlever
+		*/
 		int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
 
 		if (activity < 0) {
@@ -81,8 +119,13 @@ void	server::run() {
 			break;
 		}
 
-		// FD_ISSET regarde "c'est quel fd précisément"
-		// si c'est de l'activité sur le listening fd il faut accepter la nouvelle entrée
+		/*
+			FD_ISSET() est une fonction qui retourne un true or false si le fd qu'on
+			check en premier argument est present dans la liste de fd en deuxieme argument
+
+			listening_fd est le fd du server, si il a besoin d'être traiter c'est que quelqu'un
+			veut se connecter a lui et donc il faut accepter le nouveau client
+		*/
 		if (FD_ISSET(listening_fd, &read_fds)) {
 			SocketClient* newClient = _listeningSocket->acceptClient();
 			if (newClient) {
@@ -96,95 +139,102 @@ void	server::run() {
 			SocketClient*	client_ptr = it->second;
 
 			if (FD_ISSET(client_fd, &read_fds)) {
-				char buf[4096]; // Buffer de 4KB
-				// recv() = Lit les données du client
-				ssize_t n = recv(client_fd, buf, sizeof(buf), 0);
 
-				// si client a fermer la connexion (fermer naviguateur)
-				if (n == 0) {
-					close(client_fd);
-					delete client_ptr;
-					std::map<int, SocketClient*>::iterator next = it;
-					++next;
-					clients.erase(it);
-					it = next;
-					continue;
-				}
+				// Buffer temporaire de 4KB
+				char buf[4096];
 
-				// si erreur
-				if (n < 0) {
-					if (errno == EAGAIN || errno == EWOULDBLOCK) {
-						++it;
+				/*
+					recv() = Lit les données du client depuis un fd
+
+					recv() sans flags c'est égal a read(). C'est vraiment la meme chose
+					et dans ce cas la ya pas de flags donc c'est du coup un read()
+
+				*/
+				ssize_t bytes_read = recv(client_fd, buf, sizeof(buf), 0);
+				
+				//CAS 1: DECONNEXION OU ERREUR
+				/*
+					recv va retourner un chiffre à bytes_read
+					c'est obliger qu'il retourne quelquechose au dessus de 0
+					car select nous donne que les fd qui ont besoin de traitement
+					si elle nous retourne 0 ou <, ca veut dire que le user a deconnecter
+					ou qu'il y a erreur
+				*/
+				if (bytes_read <= 0) {
+					/*
+						il peut y arriver des cas ultra rare ou il donne des false negatifs.
+						si on appelle recv() alors qu'il n'y a aucune information a lire,
+						on dit de continuer et de pas interompre la connexion avec.
+						le prochain loop il va reussir a le gerer lerreur
+
+						Signification : Les deux signifient exactement la même chose : "L'opération ne peut pas être faite maintenant, veuillez réessayer plus tard."
+       						EAGAIN = "Try again" (Réessaie).
+       						EWOULDBLOCK = "The operation would block" (L'opération devrait bloquer).
+					*/
+					if (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+						std::cout << "!!!False error!!!" << std::endl;
+						it++;
 						continue;
 					}
+					
+					// on ferme le fd du client, supprime son objet et on le supprime de std::map
+					std::cout << "Client " << client_fd << " disconnected or error." << std::endl;
 					close(client_fd);
 					delete client_ptr;
-					std::map<int, SocketClient*>::iterator next = it;
-					++next;
-					clients.erase(it);
-					it = next;
+					clients.erase(it++);
 					continue;
 				}
-				std::string payload(buf, buf + n);
-				std::cout << "Received from fd " << client_fd << ": " << payload << std::endl;
+ 
+				//CAS 2: DONNEES RECU, ON LES AJOUTE AU BUFFER
+				/*
+					chaque client a son buffer personnel.
+					J'ajoute les bytes lu dans le buffer du client pour ensuite regarder plus tard
+					si j'ai eu la requete en entier.
+					je l'append dans un std::string car std::string grandit tout seul
+				*/
+				client_ptr->getBuffer().append(buf, bytes_read);
 
-				// -- Minimal static file serving: always reply with index.html --
-				std::string body;
-				std::ifstream file("/home/isaiah/Downloads/random.html");
-				if (file) {
-					std::ostringstream ss;
-					ss << file.rdbuf();
-					body = ss.str();
-				}
-				std::ostringstream response;
-				if (body.empty()) {
-					body = "<html><body><h1>404 Not Found</h1></body></html>";
-					response << "HTTP/1.1 404 Not Found\r\n";
-				} else {
-					response << "HTTP/1.1 200 OK\r\n";
-				}
-				response << "Content-Type: text/html; charset=UTF-8\r\n";
-				response << "Content-Length: " << body.size() << "\r\n";
-				response << "Connection: close\r\n\r\n";
-				response << body;
+				// je check ici si la requete est finis en cherchant "\r\n\r\n"
+				if (client_ptr->getBuffer().find("\r\n\r\n") != std::string::npos) { // je check si la request est pas finis
 
-				std::string raw = response.str();
-				send(client_fd, raw.c_str(), raw.size(), 0);
-				close(client_fd);
-				delete client_ptr;
-				std::map<int, SocketClient*>::iterator next = it;
-				++next;
-				clients.erase(it);
-				it = next;
-				continue;
-				// end
+					std::cout << "FULL REQUEST: " << client_ptr->getBuffer() << std::endl << std::endl;
+
+					// !! ici c'est pour toi Dim, tu peux faire tes envoie de requetes
+					std::string payload(buf, buf + bytes_read);
+					std::cout << "Received from fd " << client_fd << ": " << payload << std::endl;
+
+					// -- Minimal static file serving: always reply with .html --
+					std::string body;
+					std::ifstream file("/home/isaiah/Downloads/random.html");
+					if (file) {
+						std::ostringstream ss;
+						ss << file.rdbuf();
+						body = ss.str();
+					}
+					std::ostringstream response;
+					if (body.empty()) {
+						body = "<html><body><h1>404 Not Found</h1></body></html>";
+						response << "HTTP/1.1 404 Not Found\r\n";
+					} else {
+						response << "HTTP/1.1 200 OK\r\n";
+					}
+					response << "Content-Type: text/html; charset=UTF-8\r\n";
+					response << "Content-Length: " << body.size() << "\r\n";
+					response << "Connection: close\r\n\r\n";
+					response << body;
+
+					std::string raw = response.str();
+					send(client_fd, raw.c_str(), raw.size(), 0);
+
+					// on vide le buffer du client
+					client_ptr->getBuffer().clear();
+				}
+				else { // REQUETE INCOMPLETE
+					std::cout << "user: " << client_fd << " has slow connexion, comming back to him later." << std::endl;
+				}
 			}
 			++it;
 		}
-
-		
-		
-		/* if (activity > 0) {
-			if (FD_ISSET(listening_fd, &read_fds)) {
-				std::cout << "New connection waiting!" << std::endl;
-				if ((int)clients.size() < _maxUsers) {
-				//CREATE NEW SOCKET CLIENT ON HEAP
-				//ADD OBJECT TO UNORDERED MAP (clients) IN SERVER
-				}
-				else {
-					std::cout << "Server is already full" << std::endl;
-				}
-			}
-			std::map<int, SocketClient*>::iterator it;
-			for (it = clients.begin(); it != this->clients.end(); ++it) {
-				int client_fd = it->first;// donne la clé (le int)
-				SocketClient* client_ptr = it->second;// donne la valeur (socketclient)
-				(void) client_ptr;
-				if (FD_ISSET(client_fd, &read_fds)) {
-					std::cout << "Client : " << client_fd << " sent a message." << std::endl;
-				}
-			}
-		}	 */
 	}
 }
 
