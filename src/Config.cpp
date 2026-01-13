@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/21 07:40:17 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 13:20:21 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/12 12:13:14 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -324,7 +324,6 @@ std::vector<ServerConfig>	ConfigParser::parse(const std::string &filepath) {
 			break ;
 		if (token != "server")
 			throw ConfigParserE(_formatErrorMsg("Expected 'server' keyword, got: " + token));
-
 		token = _readToken();
 		ServerConfig	config = _parseServerBlock();
 		servers.push_back(config);

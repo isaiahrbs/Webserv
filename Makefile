@@ -19,7 +19,8 @@ SRCS = webserv.cpp \
 	src/Config.cpp \
 	src/Exceptions.cpp \
 	src/Request.cpp \
-	src/Response.cpp
+	src/Response.cpp \
+	src/RequestHandler.cpp
 
 # Fichiers objets
 OBJS = $(SRCS:.cpp=.o)

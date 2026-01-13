@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 13:06:22 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/09 10:03:11 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/12 11:36:09 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -350,5 +350,10 @@ public:
 	* 	@endcode
 	*/
 	std::string	build() const;
-
+	/**
+	* @brief Génère une page HTML d'autoindex (listing de dossier)
+	* @param folderPath Le chemin du dossier sur le disque
+	* @return Une string contenant le HTML généré
+	*/
+	static std::string	generateAutoindex(const std::string &folderPath, const std::string &uriPath);
 };

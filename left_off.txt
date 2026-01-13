@@ -1,33 +1,53 @@
 fix bugs, make run server work and learn select()
 
 
-START
-│
-├─ [1] ConfigParser.parse("server.conf")
-│        └─ Charge config en mémoire ✅ FAIT - TRY TO DESTROY !!
-│
-├─ [2] Crée SocketServer pour chaque port  -->ISA
-│
-├─ [3] Écoute sur les ports (select())    -->ISA
-│
-└─ BOUCLE INFINIE :
-	│
-	├─ Client envoie requête HTTP brute
-	│
-	├─ [4] Request.parse(rawData)    -->DIM
-	│        └─ Extrait method, uri, headers, body
-	│
-	├─ [5] Cherche le bon serveur/location dans la config   -->DIM
-	│        └─ Logique à implémenter
-	│
-	├─ [6] Traite selon la config    -->DIM
-	│        ├─ Serve file statique
-	│        ├─ Execute CGI
-	│        ├─ Redirect
-	│        └─ Error pages
-	│
-	├─ [7] Response.build()   -->DIM
-	│        └─ Sérialise en HTTP
-	│
-	└─ [8] Envoie réponse au client   --> ISA
-
+┌──────────────┐
+│  UTILISATEUR │  "Je veux http://localhost:8080/test"
+└──────┬───────┘
+       │
+       ↓
+┌──────────────────────────────────────────────┐
+│  CLIENT (Navigateur)                         │
+│  Génère automatiquement :                    │
+│  GET /test HTTP/1.1\r\n                     │
+│  Host: localhost:8080\r\n                   │
+│  \r\n                                       │
+└──────┬───────────────────────────────────────┘
+       │ (envoi via TCP)
+       ↓
+┌─────────────────────────────────────────────────────────┐
+│  SERVEUR (Webserv)                                      │
+│                                                         │
+│  1. Reçoit le texte brut                               │
+│  2. Request::parse() traduit en C++                    │
+│     _method = "GET"                                    │
+│     _uri = "/test"                                     │
+│     _version = "HTTP/1.1"                              │
+│                                                         │
+│  3. Regarde la config pour port 8080                   │
+│     root = "www/server1"                               │
+│     allowed_methods = [GET, POST]                      │
+│                                                         │
+│  4. Cherche le fichier www/server1/test                │
+│     Trouve le fichier ou génère une erreur 404         │
+│                                                         │
+│  5. Response::build() traduit en HTTP                  │
+│     HTTP/1.1 200 OK\r\n                                │
+│     Content-Type: text/html\r\n                        │
+│     \r\n                                               │
+│     <html>...</html>                                   │
+│                                                         │
+│  6. Envoie la réponse au client                        │
+└──────┬──────────────────────────────────────────────────┘
+       │ (envoi via TCP)
+       ↓
+┌──────────────────────────────┐
+│  CLIENT (Navigateur)         │
+│  Reçoit la réponse HTTP      │
+│  Affiche le contenu HTML     │
+└──────┬───────────────────────┘
+       │
+       ↓
+┌──────────────┐
+│  UTILISATEUR │  Voit la page s'afficher ✅
+└──────────────┘
