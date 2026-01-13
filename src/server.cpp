@@ -195,7 +195,8 @@ void	server::run() {
 				client_ptr->getRequestBuffer().append(buf, bytes_read);
 
 				// je check ici si la requete est finis en cherchant "\r\n\r\n"
-				if (client_ptr->getRequestBuffer().find("\r\n\r\n") != std::string::npos) { // je check si la request est pas finis
+				size_t find_end = client_ptr->getRequestBuffer().find("\r\n\r\n");
+				if (find_end != std::string::npos) { // je check si la request est pas finis
 
 					std::cout << "FULL REQUEST: " << client_ptr->getRequestBuffer() << std::endl << std::endl;
 
