@@ -5,22 +5,34 @@
 
 
 int main(int argc, char **argv) {
-	server Server(8080);// on va changer a le port donner dans le fichier
-
-	//parse_input(argv); fais ca dimicouille
-	(void)argc;
-	(void)argv;
+	std::string configPath = "config/server.conf";
+	if (argc > 1)
+		configPath = argv[1];
 
 	try {
-		Server.setup_socket();
-		std::cout << "Socket setup pass" << std::endl;
-		Server.run();
+		ConfigParser parser;
+		std::vector<ServerConfig> servers = parser.parse(configPath);
+		if (servers.empty()) {
+			std::cerr<<"Error: No servers configured in "<<configPath<<std::endl;
+			return (1);
+		}
+		std::cout<<"✓ Loaded "<<servers.size()<<" server(s) from "<<configPath<<std::endl;
+		server webServer(servers[0].port, servers);
+		webServer.setup_socket();
+		std::cout << "✓ Socket setup successful on port " << servers[0].port << std::endl;
+		webServer.run();
 	}
-	catch (std::exception& e) {
+	catch (const ConfigParserE &e) {
+		std::cerr << "✗ Config parsing error: " << e.what() << std::endl;
+		return (1);
+	}
+	catch (const std::exception &e) {
+		std::cerr << "✗ Error: " << e.what() << std::endl;
+		return (1);
+	}
 
-	}
+	return (0);
 }
-
 
 
 //		TEST MAIN PARSER
