@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 19:10:09 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/09 10:30:05 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/19 10:59:41 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,30 @@ void	Response::setHeader(const std::string &key, const std::string &value) {
 
 void	Response::setBody(const std::string &body) {
 	_body = body;
+}
+
+// ============ CONVERT TO RAW RESPONSE ============
+RawResponse	Response::toRaw() const {
+	RawResponse	raw;
+	raw.version = _version;
+	raw.statusCode = _statusCode;
+	raw.statusMessage = _statusMessage;
+	raw.body = _body;
+
+	// Copy headers from arrays to map
+	for (int i = 0; i < _headerCount; i++) {
+		raw.headers[_headerKeys[i]] = _headerValues[i];
+	}
+
+	return (raw);
+}
+
+int	Response::getStatusCode() const {
+	return (_statusCode);
+}
+
+std::string	Response::getBody() const {
+	return (_body);
 }
 
 std::string	Response::build() const {

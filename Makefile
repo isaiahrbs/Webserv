@@ -20,20 +20,33 @@ SRCS = webserv.cpp \
 	src/Exceptions.cpp \
 	src/Request.cpp \
 	src/Response.cpp \
-	src/RequestHandler.cpp
+	src/RequestHandler.cpp \
+	src/HTTPCommon.cpp \
+	src/HTTPParser.cpp \
+	src/HTTPSerializer.cpp \
+	src/FileHandler.cpp \
+	src/ResponseBuilder.cpp \
+	src/CGIHandler.cpp
 
 # Fichiers objets
 OBJS = $(SRCS:.cpp=.o)
 
 # Fichiers d'en-tête
 HEADERS = inc/server.hpp \
-		  inc/ASocket.hpp \
-		  inc/SocketServer.hpp \
-		  inc/SocketClient.hpp \
-		  inc/Response.hpp \
-		  inc/Config.hpp \
-		  inc/Request.hpp \
-		  inc/Exceptions.hpp
+		inc/ASocket.hpp \
+		inc/SocketServer.hpp \
+		inc/SocketClient.hpp \
+		inc/Response.hpp \
+		inc/Config.hpp \
+		inc/Request.hpp \
+		inc/Exceptions.hpp \
+		inc/HTTPCommon.hpp \
+		inc/HTTPParser.hpp \
+		inc/HTTPSerializer.hpp \
+		inc/FileHandler.hpp \
+		inc/ResponseBuilder.hpp \
+		inc/CGIHandler.hpp \
+		inc/RequestHandler.hpp
 
 # Règle par défaut
 all: $(NAME)

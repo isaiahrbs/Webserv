@@ -1,0 +1,5 @@
+RAW HTTP → HTTPParser → RawRequest → Request → RequestHandler → Response → HTTPSerializer → RAW HTTP
+                                                    ↓
+                                            ResponseBuilder
+                                                    ↓
+                                            FileHandler, CGIHandler

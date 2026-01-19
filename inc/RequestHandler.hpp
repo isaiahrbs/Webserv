@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/13 09:08:04 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/18 10:27:51 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/19 12:01:34 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,14 @@
 # include "Request.hpp"
 # include "Response.hpp"
 # include "Exceptions.hpp"
+# include "HTTPParser.hpp"
+# include "HTTPSerializer.hpp"
+# include "FileHandler.hpp"
+# include "CGIHandler.hpp"
+# include "HTTPCommon.hpp"
 # include <dirent.h>
 # include <sys/stat.h>
-#include <sys/types.h>
+# include <sys/types.h>
 
 /**
  * @class	RequestHandler
@@ -83,88 +88,6 @@ class	RequestHandler {
 		*/
 		bool			_isMethodAllowed(LocationConfig* loc, const std::string &method);
 
-
-
-		// ====== FILE OPERATIONS ======
-
-		/**
-		* @brief	Convertit un nombre long en string (décimal)
-		* @param	num Le nombre à convertir
-		* @return	Représentation décimale en string
-		* @details	Utilisé principalement pour Content-Length et affichage de tailles
-		*/
-		std::string		_intToString(long num);
-
-		/**
-		* @brief	Construit le chemin d'accès complet au fichier sur disque
-		* @param	loc Pointeur vers LocationConfig contenant le root
-		* @param	uri L'URI demandé par le client
-		* @return	Chemin absolu vers le fichier (ex: "www/server1/upload")
-		* @details	Combine loc->root avec l'URI, gère les slashes
-		*/
-		std::string		_buildFilePath(LocationConfig* loc, const std::string &uri);
-
-		/**
-		* @brief	Lit le contenu complet d'un fichier
-		* @param	filePath Chemin absolu du fichier
-		* @return	Contenu du fichier en binary string
-		* @throw	ResponseE si le fichier ne peut pas être ouvert
-		* @details	Lit le fichier en mode binaire (préserve les bytes exacts)
-		*/
-		std::string		_getFileContent(const std::string &filePath);
-
-		/**
-		* @brief	Détermine le type MIME d'un fichier selon son extension
-		* @param	filePath Chemin du fichier
-		* @return	Type MIME (ex: "text/html", "image/png")
-		* @details	Supporte 18 types MIME courants, défaut: "application/octet-stream"
-		*/
-		std::string		_getMimeType(const std::string &filePath);
-
-		/**
-		* @brief	Vérifie l'existence d'un fichier ou dossier
-		* @param	filePath Chemin à vérifier
-		* @return	true si existe, false sinon
-		* @details	Utilise stat() pour la vérification
-		*/
-		bool			_fileExists(const std::string &filePath);
-
-		/**
-		* @brief	Vérifie si un chemin correspond à un dossier
-		* @param	filePath Chemin à vérifier
-		* @return	true si c'est un dossier, false sinon
-		* @details	Utilise S_ISDIR() sur struct stat
-		*/
-		bool			_isDirectory(const std::string &filePath);
-
-		/**
-		* @brief	Supprime un fichier du disque
-		* @param	filePath Chemin absolu du fichier à supprimer
-		* @return	true si la suppression réussit, false sinon
-		* @details	Utilise la fonction C standard remove() de <cstdio>
-		* 			Retourne true si remove() == 0 (succès)
-		*/
-		bool			_deleteFile(const std::string &filePath);
-
-		/**
-		* @brief	Écrit du contenu dans un fichier
-		* @param	filePath Chemin du fichier à créer/overwrite
-		* @param	content Contenu à écrire
-		* @return	true si succès, false sinon
-		* @details	Crée le fichier en mode binaire, overwrite si existe
-		*/
-		bool			_writeFile(const std::string &filePath, const std::string &content);
-
-		// ====== BODY HANDLING ======
-
-		/**
-		* @brief	Vérifie si une requête HTTP est complète (headers + body)
-		* @param	rawData Les données brutes reçues du socket
-		* @param	request Objet Request parsé (pour Content-Length)
-		* @return	true si la requête est complète, false sinon
-		* @details	Sans Content-Length = requête complète (GET, HEAD, etc.)
-		* 			Avec Content-Length = vérifie que bodySize >= Content-Length
-		*/
 		bool			_isBodyComplete(const std::string &rawData, const Request &request);
 
 		/**
@@ -175,26 +98,6 @@ class	RequestHandler {
 		* @details	Retourne false si maxBodySize <= 0 (pas de limite)
 		*/
 		bool			_isBodyTooLarge(long bodySize, ServerConfig* server);
-
-		// ====== DIRECTORY HANDLING ======
-
-		/**
-		* @brief	Génère une page HTML listant le contenu d'un dossier (autoindex)
-		* @param	dirPath Chemin absolu du dossier
-		* @param	uri L'URI d'origine pour les liens relatifs
-		* @return	HTML table contenant les fichiers et dossiers
-		* @details	Utilise opendir/readdir/closedir POSIX
-		* 			Affiche taille pour fichiers, "[DIR]" pour dossiers
-		*/
-		std::string		_generateAutoindex(const std::string &dirPath, const std::string &uri);
-
-		/**
-		* @brief	Extrait le nom de fichier de l'URI pour upload
-		* @param	request L'objet Request contenant l'URI
-		* @return	Nom du fichier (ex: "image.png" de "/upload/image.png")
-		* @details	Fallback à "uploaded_file.bin" si URI sans nom
-		*/
-		std::string		_extractFileName(const Request &request);
 
 		// ====== HTTP METHODS HANDLERS ======
 
@@ -238,41 +141,6 @@ class	RequestHandler {
 		* 			4. Retourne 204 No Content ou 500 si erreur
 		*/
 		Response		_handleDELETE(const Request &request, ServerConfig* server, LocationConfig* loc);
-
-		// ====== RESPONSE BUILDING ======
-
-		/**
-		* @brief	Construit une Response HTTP valide avec statut, headers et body
-		* @param	code Code de statut HTTP (200, 404, 500, etc.)
-		* @param	message Message du statut (OK, Not Found, Internal Server Error)
-		* @param	body Contenu du body (HTML, JSON, fichier, etc.)
-		* @param	mimeType Type MIME du contenu (text/html, image/png, etc.)
-		* @return	Response objet complètement construit et prêt à envoyer
-		* @details	Ajoute automatiquement Content-Length et Content-Type
-		*/
-		Response		_buildResponse(int code, const std::string &message,
-										const std::string &body, const std::string &mimeType);
-
-		/**
-		* @brief	Charge une page d'erreur personnalisée depuis la config
-		* @param	code Code HTTP d'erreur (404, 500, etc.)
-		* @param	message Message d'erreur
-		* @param	server Pointeur vers ServerConfig (errorPages map)
-		* @return	Contenu HTML de la page d'erreur, ou fallback généré
-		* @details	Cherche dans server->errorPages[code]
-		* 			Si fichier n'existe pas ou erreur, génère du HTML simple
-		*/
-		std::string		_loadErrorPage(int code, const std::string &message, ServerConfig* server);
-
-		/**
-		* @brief	Construit une Response d'erreur HTTP complète
-		* @param	code Code HTTP (400, 404, 405, 413, 500, etc.)
-		* @param	message Message d'erreur
-		* @param	server Configuration du serveur (pour pages personnalisées)
-		* @return	Response avec page d'erreur
-		* @details	Combine _loadErrorPage et _buildResponse
-		*/
-		Response		_errorResponse(int code, const std::string &message, ServerConfig* server);
 
 	public:
 
