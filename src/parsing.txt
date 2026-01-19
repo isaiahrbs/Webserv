@@ -3,3 +3,30 @@ RAW HTTP → HTTPParser → RawRequest → Request → RequestHandler → Respon
                                             ResponseBuilder
                                                     ↓
                                             FileHandler, CGIHandler
+
+
+
+
+a priori all good,
+
+dans server.cpp =====>>>>>
+
+Ajoute un membre a ton serveur :
+	HTTPServerEngine*		_engine;
+
+ajoute include "HTTPCommon.hpp" et "Config.hpp" si t'as pas encore
+
+du coup faudra bien initialiser ton engine dans ton constructeur + le nettoyer dans ton destructeur
+etant donné que c'est un pointeur , faut bien penser a le delete sinon fuite
+
+ensuite dans ta boucle tu peux  :
+		std::string httpResponse = this->_engine->processRequest(raw, port); <---- cette fonction te fait tout le travail du parsing, t'as juste a gérer tes buffers de reponse/requete
+		client->getResponseBuffer() = httpResponse; <<----- en gros, je sais pas comment tu fais
+
+
+
+Le + important c'est de rajouter un HTTPServerEngine*	_engine en privé dans ta classe,
+c'est dans cette classe ou j'ai articulé toutes mes autres fonctions, t'as plus qu'a appeler la fonction processRequest(raw, port) pour
+gérer les demandes et tes connections..
+
+kissu kissu isab
