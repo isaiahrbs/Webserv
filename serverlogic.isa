@@ -1,0 +1,10 @@
+je vais crée un std::vector dans le main qui
+va avoir plusieurs objet server qui gere leur
+propre port.
+
+faire un loop qui va prendre en argument cette liste
+qui va gerer chaque clients de chaque server en un
+seul thread.
+
+donc je vais enlever le run() de la classe objet et
+le mettre dedans le *int main*.
