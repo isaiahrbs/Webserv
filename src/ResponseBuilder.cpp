@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 11:56:03 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 12:57:52 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/21 08:34:24 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ ResponseBuilder::~ResponseBuilder() {}
 		HELPER: Charger page d'erreur personnalisée
 	============================================================================ */
 
-std::string	ResponseBuilder::_loadErrorPage(int code, const std::string &message) {
+std::string	ResponseBuilder::_loadErrorPage(int code) {
 	if (!_server)
 		return ("");
 	if (_server->errorPages.find(code) != _server->errorPages.end()) {
@@ -64,7 +64,7 @@ Response	ResponseBuilder::buildSuccess(int code, const std::string &body,
 	============================================================================ */
 
 Response	ResponseBuilder::buildError(int code, const std::string &message) {
-	std::string	customBody = _loadErrorPage(code, message);
+	std::string	customBody = _loadErrorPage(code);
 	if (!customBody.empty())
 		return (buildSuccess(code, customBody, "text/html"));
 	RawResponse	raw = HTTPSerializer::createErrorResponse(code, message);

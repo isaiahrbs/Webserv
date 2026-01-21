@@ -49,7 +49,7 @@ void	server::run() {
 		// vide la liste des FDs
 		FD_ZERO(&read_fds);
 
-		/*		
+		/*
 			FD_SET permet d'ajouter un FD dans une liste de fd (fd_set)
 			on ajoute le FD du serveur dedans read_fds qui va nous être utile just après
 		*/
@@ -58,7 +58,7 @@ void	server::run() {
 		/*
 			on met le max_fd = a listening_fd car listening_fd est le fd le plus grand
 			pour l'instant.
-			
+
 			(default fd = fd mis par le kernel automatiquement)
 			fds:
 			0• stdin			| default fd
@@ -91,7 +91,7 @@ void	server::run() {
 		for (it = clients.begin(); it != clients.end(); ++it) {
 			int client_fd = it->first;
 			FD_SET(client_fd, &read_fds);
-			
+
 			/*
 				si il y a un client avec un fd plus grand que max_fd
 				ca veut dire que ya un nouveau client et donc on augemente le max_fd
@@ -151,7 +151,7 @@ void	server::run() {
 
 				*/
 				ssize_t bytes_read = recv(client_fd, buf, sizeof(buf), 0);
-				
+
 				//CAS 1: DECONNEXION OU ERREUR
 				/*
 					recv va retourner un chiffre à bytes_read
@@ -176,7 +176,7 @@ void	server::run() {
 						it++;
 						continue;
 					}
-					
+
 					// on ferme le fd du client, supprime son objet et on le supprime de std::map
 					std::cout << "Client " << client_fd << " disconnected or error." << std::endl;
 					close(client_fd);
@@ -184,7 +184,7 @@ void	server::run() {
 					clients.erase(it++);
 					continue;
 				}
- 
+
 				//CAS 2: DONNEES RECU, ON LES AJOUTE AU BUFFER
 				/*
 					chaque client a son buffer personnel.

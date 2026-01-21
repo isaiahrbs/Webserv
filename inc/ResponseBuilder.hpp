@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 11:51:30 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 12:45:40 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/21 08:34:12 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ class ResponseBuilder {
 		* 			3. Sinon, génère une page d'erreur par défaut
 		* @note	Jamais d'exceptions levées, toujours une réponse valide
 		*/
-		std::string		_loadErrorPage(int code);
+		std::string	_loadErrorPage(int code);
 
 	public:
 		/**

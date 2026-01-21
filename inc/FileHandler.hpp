@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 08:31:11 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 10:42:39 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/21 08:24:12 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <dirent.h>
+# include "HTTPCommon.hpp"
 
 /*	============================================================================
 		FILE HANDLER CLASS

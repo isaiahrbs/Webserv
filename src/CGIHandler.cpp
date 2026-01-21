@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 10:48:14 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 12:55:36 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/21 08:37:34 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,12 @@ std::map<std::string, std::string>	CGIHandler::_buildCGIEnvironment(const Reques
 	env["REQUEST_METHOD"] = normalizedMethod;
 	env["SCRIPT_NAME"] = scriptPath;
 	env["SCRIPT_FILENAME"] = scriptPath;
-	env["SERVER_NAME"] = server.serverName;
+	std::string serverName;
+	if (server.serverNames.empty())
+		serverName = "localhost";
+	else
+		serverName = server.serverNames[0];
+	env["SERVER_NAME"] = serverName;
 	env["SERVER_PORT"] = httpIntToString(server.port);
 	env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	env["SERVER_SOFTWARE"] = "WebServ/1.0";

@@ -6,11 +6,12 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/13 09:19:21 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 12:15:03 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/21 08:22:13 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestHandler.hpp"
+#include "../inc/ResponseBuilder.hpp"
 
 RequestHandler::RequestHandler(const std::vector<ServerConfig> &servers) : _servers(servers) {}
 RequestHandler::~RequestHandler() {}

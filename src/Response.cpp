@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 19:10:09 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 10:59:41 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/21 08:21:00 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,15 +58,4 @@ int	Response::getStatusCode() const {
 
 std::string	Response::getBody() const {
 	return (_body);
-}
-
-std::string	Response::build() const {
-	std::stringstream	response;
-	response<<_version<<" "<<_statusCode<<" "<<_statusMessage<<"\r\n";
-	for (int i = 0; i < _headerCount; i++) {
-		response << _headerKeys[i] << ": " << _headerValues[i] << "\r\n";
-	}
-	response<<"\r\n";
-	response<<_body;
-	return (response.str());
 }

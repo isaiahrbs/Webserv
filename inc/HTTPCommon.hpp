@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 08:14:10 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 14:27:40 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/01/21 08:18:54 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <string>
 # include <map>
 # include <cstdlib>
+# include <vector>
 class RequestHandler;
 class ServerConfig;
 
