@@ -7,11 +7,10 @@
 #include <cstring>
 #include <cerrno>
 
-SocketServer::SocketServer(int port, int maxUsers) : ASocket(port) {
+SocketServer::SocketServer(int port, const std::string& host, int maxUsers) : ASocket(port, host) {
 	_fd = -1;
 	_port = port;
 	_maxUsers = maxUsers;
-	memset(&_addr, 0, sizeof(_addr));
 }
 
 SocketServer::~SocketServer() {
@@ -39,11 +38,6 @@ void	SocketServer::setNonBlocking() {
 
 // sets the phone to be connected to 8080 at our ip address
 void	SocketServer::bindSocket() {
-	memset(&_addr, 0, sizeof(_addr));
-	_addr.sin_family = AF_INET;
-	_addr.sin_addr.s_addr = INADDR_ANY;
-	_addr.sin_port = htons(_port);
-
 	// bind
 	if (bind(_fd, (struct sockaddr*)&_addr, sizeof(_addr)) < 0)
 		throw socketException("Error: bind");

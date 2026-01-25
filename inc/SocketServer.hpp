@@ -22,7 +22,7 @@ private:
 	int	_maxUsers;
 
 public:
-	SocketServer(int port, int maxUsers);
+	SocketServer(int port, const std::string& host, int maxUsers);
 	virtual	~SocketServer();
 
 	void		create();

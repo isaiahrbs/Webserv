@@ -1,7 +1,7 @@
 #include "../inc/SocketClient.hpp"
 #include <unistd.h>
 
-SocketClient::SocketClient(int fd, struct sockaddr_in addr) : ASocket(0) {
+SocketClient::SocketClient(int fd, struct sockaddr_in addr) : ASocket(0, "") {
 	this->_fd = fd;
 	this->_addr = addr;
 }

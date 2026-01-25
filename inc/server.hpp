@@ -2,28 +2,26 @@
 
 #include <iostream>
 #include <map>
+#include "Config.hpp"
 #include "SocketServer.hpp"
 #include "SocketClient.hpp"
+#include <vector>
 
 class server
 {
 private:
-	int _port;
 	int _maxUsers;
-	SocketServer* _listeningSocket;
 	std::map<int, SocketClient*> clients; // les clients connecté
+	std::map<int, SocketServer*> serverPorts;
 
 public:
 	// ===== Constructors =====
-	server(int port);
+	//prendre en parametre les ports mis dans le vector par le parsing
+	server(const std::vector<ServerConfig>& serverConfigs);
 	~server();
 
 	// ===== Functions =====
-	int	getPort();
-	int getServerSize();
 	int getServerLimit();
-	
-	void setup_socket();
 	void run();
 
 	class	serverException : public std::exception {

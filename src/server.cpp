@@ -6,32 +6,46 @@
 #include <fstream>
 #include <sstream>
 
-server::server(int port) : _port(port), _maxUsers(1024), _listeningSocket(0) {
-	this->_listeningSocket = new SocketServer(_port, _maxUsers);
+server::server(const std::vector<ServerConfig>& serverConfigs) : _maxUsers(1024) {
+	for (size_t i = 0; i < serverConfigs.size(); ++i) {
+		const ServerConfig& config = serverConfigs[i];
+		try {
+			// Check if a socket for this port already exists
+			if (serverPorts.find(config.port) == serverPorts.end()) {
+				SocketServer* newSocket = new SocketServer(config.port, config.host, _maxUsers);
+				newSocket->create();
+				newSocket->setNonBlocking();
+				newSocket->bindSocket();
+				newSocket->listenSocket();
+				serverPorts[config.port] = newSocket;
+				std::cout << "Server listening on " << config.host << ":" << config.port << std::endl;
+			} else {
+				std::cout << "Port " << config.port << " is already being listened to. Skipping duplicate." << std::endl;
+			}
+		} catch (const ASocket::socketException& e) {
+			std::cerr << "Error setting up socket on port " << config.port << ": " << e.what() << std::endl;
+			throw serverException(std::string("Failed to set up all listening sockets: ") + e.what());
+		}
+	}
 }
 
 server::~server() {
-	delete this->_listeningSocket;
-	this->_listeningSocket = 0;
-}
+	for (std::map<int, SocketServer*>::iterator it = serverPorts.begin(); it != serverPorts.end(); ++it) {
+		std::cout << "Closing socket on port " << it->first << std::endl;
+		delete it->second;
+	}
+	serverPorts.clear();
 
-int	server::getPort() {
-	return _port;
-}
-
-int server::getServerSize() {
-	return clients.size();
+	for (std::map<int, SocketClient*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		std::cout << "Closing client with FD " << it->first << std::endl;
+		close(it->first);
+		delete it->second;
+	}
+	clients.clear();
 }
 
 int server::getServerLimit() {
 	return _maxUsers;
-}
-
-void	server::setup_socket() {
-	_listeningSocket->create();
-	_listeningSocket->setNonBlocking();
-	_listeningSocket->bindSocket();
-	_listeningSocket->listenSocket();
 }
 
 
@@ -48,62 +62,36 @@ void	server::run() {
 
 		// vide la liste des FDs
 		FD_ZERO(&read_fds);
+		max_fd = 0;
 
 		/*
-			FD_SET permet d'ajouter un FD dans une liste de fd (fd_set)
-			on ajoute le FD du serveur dedans read_fds qui va nous être utile just après
+			Ajout de tous les FDs des sockets d'écoute dans read_fds et détermination du max_fd
 		*/
-		int listening_fd = this->_listeningSocket->getFd();
-		FD_SET(listening_fd, &read_fds);
-		/*
-			on met le max_fd = a listening_fd car listening_fd est le fd le plus grand
-			pour l'instant.
-
-			(default fd = fd mis par le kernel automatiquement)
-			fds:
-			0• stdin			| default fd
-			1• stdout			| default fd
-			2• stderr			| default fd
-			-> 3• listening_fd
-
-			on ajoute le listening_fd apres les autres donc c'est le plus grand
-			en ce moment.
-			plus tard quand les autres fds vont venir on va ajouter +1 a max_fds
-			et -1 quand ils partent, max_fd c'est savoir combien ya de fd dans le server
-
-		*/
-		max_fd = listening_fd;
+		std::map<int, SocketServer*>::iterator it_servers;
+		for (it_servers = serverPorts.begin(); it_servers != serverPorts.end(); ++it_servers) {
+			int listening_fd = it_servers->second->getFd();
+			FD_SET(listening_fd, &read_fds);
+			if (listening_fd > max_fd) {
+				max_fd = listening_fd;
+			}
+		}
 
 		std::cout << "Looking for activity..." << std::endl;
 
 		/*
-			on ajoute tous les fds dans la liste fd (read_fds) avec FD_SET
-			rappelle: FD_SET permet d'ajouter des fds dans une liste d'FDs
-
-			int client_fd = it_first c'est normal,
-			le std::map clients, chaque clients a 2 choses:
-				• int fd;
-				• SocketClient (l'objet)
-					- std::map<int, SocketClient*> clients
-			on peut savoir quel objet appartient a qui, le fd est avec l'objet SocketClient
+			on ajoute tous les fds des clients dans la liste fd (read_fds) avec FD_SET
 		*/
-		std::map<int, SocketClient*>::iterator it;
-		for (it = clients.begin(); it != clients.end(); ++it) {
-			int client_fd = it->first;
+		std::map<int, SocketClient*>::iterator it_clients;
+		for (it_clients = clients.begin(); it_clients != clients.end(); ++it_clients) {
+			int client_fd = it_clients->first;
 			FD_SET(client_fd, &read_fds);
 
 			/*
 				si il y a un client avec un fd plus grand que max_fd
 				ca veut dire que ya un nouveau client et donc on augemente le max_fd
-
-				0• stdin			| default fd
-				1• stdout			| default fd
-				2• stderr			| default fd
-				3• listening_fd
-				-> 4• client_fd
 			*/
 			if (client_fd > max_fd) {
-				max_fd = client_fd;// augemente la limite si ya des fds
+				max_fd = client_fd;
 			}
 		}
 
@@ -116,64 +104,42 @@ void	server::run() {
 
 		if (activity < 0) {
 			throw serverException("Activity < 0");
-			break;
 		}
 
 		/*
 			FD_ISSET() est une fonction qui retourne un true or false si le fd qu'on
 			check en premier argument est present dans la liste de fd en deuxieme argument
 
-			listening_fd est le fd du server, si il a besoin d'être traiter c'est que quelqu'un
-			veut se connecter a lui et donc il faut accepter le nouveau client
+			Vérifie chaque socket d'écoute pour de nouvelles connexions
 		*/
-		if (FD_ISSET(listening_fd, &read_fds)) {
-			SocketClient* newClient = _listeningSocket->acceptClient();
-			if (newClient) {
-				clients[newClient->getFd()] = newClient;
-				std::cout << "New client connected with FD: " << newClient->getFd() << std::endl;
+		for (it_servers = serverPorts.begin(); it_servers != serverPorts.end(); ++it_servers) {
+			int listening_fd = it_servers->second->getFd();
+			if (FD_ISSET(listening_fd, &read_fds)) {
+				SocketServer* listeningSocket = it_servers->second;
+				int port = it_servers->first;
+				SocketClient* newClient = listeningSocket->acceptClient();
+				if (newClient) {
+					clients[newClient->getFd()] = newClient;
+					std::cout << "New client connected with FD: " << newClient->getFd() << " on port " << port << std::endl;
+				}
 			}
 		}
 
-		for (it = clients.begin(); it != clients.end(); /* increment handled inside */) {
-			int 			client_fd = it->first;
-			SocketClient*	client_ptr = it->second;
+		for (it_clients = clients.begin(); it_clients != clients.end(); /* increment handled inside */) {
+			int 			client_fd = it_clients->first;
+			SocketClient*	client_ptr = it_clients->second;
 
 			if (FD_ISSET(client_fd, &read_fds)) {
 
 				// Buffer temporaire de 4KB
 				char buf[4096];
-
-				/*
-					recv() = Lit les données du client depuis un fd
-
-					recv() sans flags c'est égal a read(). C'est vraiment la meme chose
-					et dans ce cas la ya pas de flags donc c'est du coup un read()
-
-				*/
 				ssize_t bytes_read = recv(client_fd, buf, sizeof(buf), 0);
 
 				//CAS 1: DECONNEXION OU ERREUR
-				/*
-					recv va retourner un chiffre à bytes_read
-					c'est obliger qu'il retourne quelquechose au dessus de 0
-					car select nous donne que les fd qui ont besoin de traitement
-					si elle nous retourne 0 ou <, ca veut dire que le user a deconnecter
-					ou qu'il y a erreur
-				*/
 				if (bytes_read <= 0) {
-					/*
-						il peut y arriver des cas ultra rare ou il donne des false negatifs.
-						si on appelle recv() alors qu'il n'y a aucune information a lire,
-						on dit de continuer et de pas interompre la connexion avec.
-						le prochain loop il va reussir a le gerer lerreur
-
-						Signification : Les deux signifient exactement la même chose : "L'opération ne peut pas être faite maintenant, veuillez réessayer plus tard."
-       						EAGAIN = "Try again" (Réessaie).
-       						EWOULDBLOCK = "The operation would block" (L'opération devrait bloquer).
-					*/
 					if (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
 						std::cout << "!!!False error!!!" << std::endl;
-						it++;
+						it_clients++;
 						continue;
 					}
 
@@ -181,17 +147,11 @@ void	server::run() {
 					std::cout << "Client " << client_fd << " disconnected or error." << std::endl;
 					close(client_fd);
 					delete client_ptr;
-					clients.erase(it++);
+					clients.erase(it_clients++);
 					continue;
 				}
 
 				//CAS 2: DONNEES RECU, ON LES AJOUTE AU BUFFER
-				/*
-					chaque client a son buffer personnel.
-					J'ajoute les bytes lu dans le buffer du client pour ensuite regarder plus tard
-					si j'ai eu la requete en entier.
-					je l'append dans un std::string car std::string grandit tout seul
-				*/
 				client_ptr->getRequestBuffer().append(buf, bytes_read);
 
 				// je check ici si la requete est finis en cherchant "\r\n\r\n"
@@ -234,20 +194,10 @@ void	server::run() {
 					std::cout << "user: " << client_fd << " has slow connexion, comming back to him later." << std::endl;
 				}
 			}
-			++it;
+			++it_clients;
 		}
 	}
 }
-
-/* for (auto const& [client_fd, client_ptr]
-      this->clients) {
-                FD_SET(client_fd, &read_fds);
-                if (client_fd > max_fd) {
-                    max_fd = client_fd;
-                }
-            } */
-
-
 
 server::serverException::serverException() {
 	_msg = "Server Exception";

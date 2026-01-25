@@ -3,10 +3,10 @@
 #include <fcntl.h>
 #include <cstring>
 
-ASocket::ASocket(int port) : _fd(-1) {
+ASocket::ASocket(int port, const std::string& host) : _fd(-1) {
 	std::memset(&_addr, 0, sizeof(_addr));
 	_addr.sin_family = AF_INET;
-	_addr.sin_addr.s_addr = INADDR_ANY;
+	_addr.sin_addr.s_addr = inet_addr(host.c_str());
 	_addr.sin_port = htons(port);
 }
 
