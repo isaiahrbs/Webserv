@@ -11,8 +11,8 @@ class server
 {
 private:
 	int _maxUsers;
-	std::map<int, SocketClient*> clients; // les clients connecté
-	std::map<int, SocketServer*> serverPorts;
+	std::map<int, SocketClient*> _clients; // les clients connecté
+	std::map<int, SocketServer*> _serverPorts;
 
 public:
 	// ===== Constructors =====

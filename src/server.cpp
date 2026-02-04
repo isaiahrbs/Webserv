@@ -10,14 +10,17 @@ server::server(const std::vector<ServerConfig>& serverConfigs) : _maxUsers(1024)
 	for (size_t i = 0; i < serverConfigs.size(); ++i) {
 		const ServerConfig& config = serverConfigs[i];
 		try {
-			// Check if a socket for this port already exists
-			if (serverPorts.find(config.port) == serverPorts.end()) {
-				SocketServer* newSocket = new SocketServer(config.port, config.host, _maxUsers);
-				newSocket->create();
-				newSocket->setNonBlocking();
-				newSocket->bindSocket();
-				newSocket->listenSocket();
-				serverPorts[config.port] = newSocket;
+			/*
+				il retourne le dernier objet de la std::map
+				si il n'existe pas dans la liste
+			*/
+			if (_serverPorts.find(config.port) == _serverPorts.end()) {
+				SocketServer* newServer = new SocketServer(config.port, config.host, _maxUsers);
+				newServer->create();
+				newServer->setNonBlocking();
+				newServer->bindSocket();
+				newServer->listenSocket();
+				_serverPorts[config.port] = newServer;
 				std::cout << "Server listening on " << config.host << ":" << config.port << std::endl;
 			} else {
 				std::cout << "Port " << config.port << " is already being listened to. Skipping duplicate." << std::endl;
@@ -30,18 +33,18 @@ server::server(const std::vector<ServerConfig>& serverConfigs) : _maxUsers(1024)
 }
 
 server::~server() {
-	for (std::map<int, SocketServer*>::iterator it = serverPorts.begin(); it != serverPorts.end(); ++it) {
+	for (std::map<int, SocketServer*>::iterator it = _serverPorts.begin(); it != _serverPorts.end(); ++it) {
 		std::cout << "Closing socket on port " << it->first << std::endl;
 		delete it->second;
 	}
-	serverPorts.clear();
+	_serverPorts.clear();
 
-	for (std::map<int, SocketClient*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+	for (std::map<int, SocketClient*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		std::cout << "Closing client with FD " << it->first << std::endl;
 		close(it->first);
 		delete it->second;
 	}
-	clients.clear();
+	_clients.clear();
 }
 
 int server::getServerLimit() {
@@ -68,7 +71,7 @@ void	server::run() {
 			Ajout de tous les FDs des sockets d'écoute dans read_fds et détermination du max_fd
 		*/
 		std::map<int, SocketServer*>::iterator it_servers;
-		for (it_servers = serverPorts.begin(); it_servers != serverPorts.end(); ++it_servers) {
+		for (it_servers = _serverPorts.begin(); it_servers != _serverPorts.end(); ++it_servers) {
 			int listening_fd = it_servers->second->getFd();
 			FD_SET(listening_fd, &read_fds);
 			if (listening_fd > max_fd) {
@@ -82,7 +85,7 @@ void	server::run() {
 			on ajoute tous les fds des clients dans la liste fd (read_fds) avec FD_SET
 		*/
 		std::map<int, SocketClient*>::iterator it_clients;
-		for (it_clients = clients.begin(); it_clients != clients.end(); ++it_clients) {
+		for (it_clients = _clients.begin(); it_clients != _clients.end(); ++it_clients) {
 			int client_fd = it_clients->first;
 			FD_SET(client_fd, &read_fds);
 
@@ -102,9 +105,8 @@ void	server::run() {
 		*/
 		int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
 
-		if (activity < 0) {
+		if (activity < 0)
 			throw serverException("Activity < 0");
-		}
 
 		/*
 			FD_ISSET() est une fonction qui retourne un true or false si le fd qu'on
@@ -112,20 +114,20 @@ void	server::run() {
 
 			Vérifie chaque socket d'écoute pour de nouvelles connexions
 		*/
-		for (it_servers = serverPorts.begin(); it_servers != serverPorts.end(); ++it_servers) {
+		for (it_servers = _serverPorts.begin(); it_servers != _serverPorts.end(); ++it_servers) {
 			int listening_fd = it_servers->second->getFd();
 			if (FD_ISSET(listening_fd, &read_fds)) {
 				SocketServer* listeningSocket = it_servers->second;
 				int port = it_servers->first;
 				SocketClient* newClient = listeningSocket->acceptClient();
 				if (newClient) {
-					clients[newClient->getFd()] = newClient;
+					_clients[newClient->getFd()] = newClient;
 					std::cout << "New client connected with FD: " << newClient->getFd() << " on port " << port << std::endl;
 				}
 			}
 		}
 
-		for (it_clients = clients.begin(); it_clients != clients.end(); /* increment handled inside */) {
+		for (it_clients = _clients.begin(); it_clients != _clients.end(); /* increment handled inside */) {
 			int 			client_fd = it_clients->first;
 			SocketClient*	client_ptr = it_clients->second;
 
@@ -144,10 +146,10 @@ void	server::run() {
 					}
 
 					// on ferme le fd du client, supprime son objet et on le supprime de std::map
-					std::cout << "Client " << client_fd << " disconnected or error." << std::endl;
+					std::cout << "Client " << client_fd << " disconnected or finished sending." << std::endl;
 					close(client_fd);
 					delete client_ptr;
-					clients.erase(it_clients++);
+					_clients.erase(it_clients++);
 					continue;
 				}
 
@@ -181,7 +183,7 @@ void	server::run() {
 					}
 					response << "Content-Type: text/html; charset=UTF-8\r\n";
 					response << "Content-Length: " << body.size() << "\r\n";
-					response << "Connection: close\r\n\r\n";
+					response << "Connection: keep-alive\r\n\r\n";
 					response << body;
 
 					std::string raw = response.str();

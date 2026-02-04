@@ -18,14 +18,13 @@ SocketServer::~SocketServer() {
 		close(_fd);
 }
 
-// creates a socket (the phone)
 void	SocketServer::create() {
 		_fd = socket(AF_INET, SOCK_STREAM, 0); // fd recois la clée pour modif le socket
 		if (_fd < 0)
 			throw socketException("Error: Socket creation");
 }
 
-// sets the type to Asynchrone I/O
+// rend le socket non-bloquant, on peut le reutiliser direct apres fermeture
 void	SocketServer::setNonBlocking() {
 	int opt = 1;
 		if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
@@ -36,9 +35,7 @@ void	SocketServer::setNonBlocking() {
 			throw socketException("Error: fcntl");
 }
 
-// sets the phone to be connected to 8080 at our ip address
 void	SocketServer::bindSocket() {
-	// bind
 	if (bind(_fd, (struct sockaddr*)&_addr, sizeof(_addr)) < 0)
 		throw socketException("Error: bind");
 }
