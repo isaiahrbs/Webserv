@@ -168,7 +168,7 @@ void	server::run() {
 
 					// -- Minimal static file serving: always reply with .html --
 					std::string body;
-					std::ifstream file("/home/isaiah/Downloads/random.html");
+					std::ifstream file("www/website/website.html");
 					if (file) {
 						std::ostringstream ss;
 						ss << file.rdbuf();

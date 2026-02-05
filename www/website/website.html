@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="fr" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Isaiah &amp; Dimitri | 42 Developers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    * {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .heading-font {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    
+    @keyframes typewriter {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+    
+    @keyframes glitch {
+      0%, 90%, 100% { transform: translate(0); }
+      92% { transform: translate(-2px, 1px); }
+      94% { transform: translate(2px, -1px); }
+      96% { transform: translate(-1px, 2px); }
+      98% { transform: translate(1px, -2px); }
+    }
+    
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 182, 193, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(255, 182, 193, 0.6); }
+    }
+    
+    .cursor-blink::after {
+      content: '▋';
+      animation: blink 1s infinite;
+      color: #FFD700;
+    }
+    
+    .card-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-4px) scale(1.02);
+    }
+    
+    .terminal-card {
+      background: linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 30, 0.98) 100%);
+      border: 1px solid rgba(255, 182, 193, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .terminal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: linear-gradient(transparent 50%, rgba(255, 182, 193, 0.02) 50%);
+      background-size: 100% 4px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .glow-border {
+      box-shadow: 0 0 20px rgba(255, 182, 193, 0.2), inset 0 0 20px rgba(255, 215, 0, 0.05);
+    }
+    
+    .text-gradient {
+      background: linear-gradient(135deg, #FFB6C1 0%, #FFD700 50%, #FFB6C1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .animate-in {
+      animation: fadeSlideIn 0.6s ease-out forwards;
+    }
+    
+    .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+    .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+    .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+    .stagger-4 { animation-delay: 0.4s; opacity: 0; }
+    .stagger-5 { animation-delay: 0.5s; opacity: 0; }
+    
+    .skill-tag {
+      background: linear-gradient(135deg, rgba(255, 182, 193, 0.15) 0%, rgba(255, 215, 0, 0.1) 100%);
+      border: 1px solid rgba(255, 182, 193, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .skill-tag:hover {
+      background: linear-gradient(135deg, rgba(255, 182, 193, 0.3) 0%, rgba(255, 215, 0, 0.2) 100%);
+      border-color: rgba(255, 215, 0, 0.5);
+      transform: scale(1.05);
+    }
+    
+    .profile-switch {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .profile-switch::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #FFB6C1, #FFD700);
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+    }
+    
+    .profile-switch.active::after {
+      width: 100%;
+    }
+    
+    .main-bg {
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(255, 182, 193, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(255, 215, 0, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(30, 30, 40, 1) 0%, rgba(15, 15, 25, 1) 100%);
+    }
+    
+    .project-card {
+      background: linear-gradient(145deg, rgba(35, 35, 50, 0.9) 0%, rgba(25, 25, 38, 0.95) 100%);
+      border: 1px solid rgba(255, 182, 193, 0.15);
+      backdrop-filter: blur(10px);
+    }
+    
+    .project-card:hover {
+      border-color: rgba(255, 215, 0, 0.4);
+      box-shadow: 0 10px 40px rgba(255, 182, 193, 0.15);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #FFB6C1 0%, #FFD700 100%);
+      color: #1a1a2e;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(255, 182, 193, 0.4);
+    }
+    
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 182, 193, 0.3) 50%, transparent 100%);
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(30, 30, 40, 0.5);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #FFB6C1 0%, #FFD700 100%);
+      border-radius: 4px;
+    }
+
+    .fade-transition {
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .hidden-profile {
+      opacity: 0;
+      transform: translateY(20px);
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .visible-profile {
+      opacity: 1;
+      transform: translateY(0);
+      position: relative;
+      pointer-events: auto;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full main-bg text-gray-200 overflow-auto">
+  <div class="min-h-full w-full"><!-- Decorative Elements -->
+   <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+    <div class="absolute top-10 left-10 w-2 h-2 rounded-full bg-pink-300 opacity-50 animate-pulse"></div>
+    <div class="absolute top-32 right-20 w-1 h-1 rounded-full bg-yellow-300 opacity-60 animate-pulse" style="animation-delay: 0.5s;"></div>
+    <div class="absolute bottom-40 left-1/4 w-1.5 h-1.5 rounded-full bg-pink-200 opacity-40 animate-pulse" style="animation-delay: 1s;"></div>
+    <div class="absolute top-1/2 right-1/4 w-1 h-1 rounded-full bg-yellow-200 opacity-50 animate-pulse" style="animation-delay: 1.5s;"></div>
+   </div><!-- Main Content -->
+   <div class="relative z-10 max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8"><!-- Header -->
+    <header class="text-center mb-12 animate-in stagger-1">
+     <div class="terminal-card rounded-xl p-6 glow-border mb-8">
+      <div class="flex items-center gap-2 mb-4">
+       <div class="w-3 h-3 rounded-full bg-red-400"></div>
+       <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+       <div class="w-3 h-3 rounded-full bg-green-400"></div><span class="text-xs text-gray-500 ml-2">~/portfolio</span>
+      </div>
+      <h1 id="site-title" class="heading-font text-4xl sm:text-5xl font-bold text-gradient mb-2">&lt;42_developers /&gt;</h1>
+      <p class="text-pink-200 text-sm"><span class="text-yellow-400">$</span> cat welcome.txt <span class="cursor-blink"></span></p>
+      <p class="text-gray-400 mt-2 text-sm">Software Engineers • 42 Lausanne • Building the Future</p>
+     </div><!-- Profile Selector -->
+     <div class="flex justify-center gap-4 mb-8"><button id="btn-isaiah" onclick="switchProfile('isaiah')" class="profile-switch active px-8 py-3 rounded-lg bg-gray-800/50 border border-pink-300/30 text-pink-200 font-semibold transition-all hover:bg-gray-700/50 hover:border-pink-300/50"> <span class="text-yellow-400 mr-2">→</span> Isaiah </button> <button id="btn-dimitri" onclick="switchProfile('dimitri')" class="profile-switch px-8 py-3 rounded-lg bg-gray-800/50 border border-pink-300/30 text-pink-200 font-semibold transition-all hover:bg-gray-700/50 hover:border-pink-300/50"> <span class="text-yellow-400 mr-2">→</span> Dimitri </button>
+     </div>
+    </header><!-- Isaiah's Profile -->
+    <div id="profile-isaiah" class="fade-transition visible-profile"><!-- Hero Section -->
+     <section class="terminal-card rounded-xl p-8 glow-border mb-8">
+      <div class="flex flex-col sm:flex-row items-center gap-6">
+       <div class="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-pink-300 flex items-center justify-center text-3xl font-bold text-gray-900 shadow-lg">
+        I
+       </div>
+       <div class="text-center sm:text-left">
+        <h2 class="heading-font text-3xl font-bold text-white mb-1">Isaiah</h2>
+        <p class="text-yellow-300 text-lg">42 Student • Software Developer</p>
+        <p class="text-gray-400 text-sm mt-2"><span class="text-green-400">●</span> Available for opportunities</p><a href="https://github.com/isaiahrbs" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-3 text-pink-400 hover:text-pink-300 transition-colors">
+         <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> github.com/isaiahrbs </a>
+       </div>
+      </div>
+     </section><!-- Skills Section -->
+     <section class="terminal-card rounded-xl p-6 glow-border mb-8">
+      <div class="flex items-center gap-2 mb-4"><span class="text-pink-400">$</span> <span class="text-yellow-200">ls skills/</span>
+      </div>
+      <div class="flex flex-wrap gap-3"><span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">C</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">C++</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">Linux</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">Git</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">Shell Scripting</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">Systems Programming</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">Makefile</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-yellow-100">Algorithms</span>
+      </div>
+     </section><!-- Projects Section -->
+     <section class="mb-8">
+      <div class="terminal-card rounded-xl p-6 glow-border mb-6">
+       <div class="flex items-center gap-2"><span class="text-pink-400">$</span> <span class="text-yellow-200">tree projects/</span>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><!-- Project 1 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-yellow-400"></div><span class="text-xs text-gray-500">project.c</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">MiniShell</h3>
+        <p class="text-gray-400 text-sm mb-4">Recreation of a Unix shell with built-in commands, pipes, redirections, and environment variable handling.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-pink-900/30 text-pink-300 border border-pink-500/30">C</span> <span class="text-xs px-2 py-1 rounded bg-yellow-900/30 text-yellow-300 border border-yellow-500/30">POSIX</span> <span class="text-xs px-2 py-1 rounded bg-blue-900/30 text-blue-300 border border-blue-500/30">Parsing</span>
+        </div><a href="https://github.com/isaiahrbs" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div><!-- Project 2 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-yellow-400"></div><span class="text-xs text-gray-500">raycast.c</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Cub3D - Raycasting</h3>
+        <p class="text-gray-400 text-sm mb-4">A Wolfenstein 3D-style game engine using raycasting techniques for pseudo-3D rendering.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-pink-900/30 text-pink-300 border border-pink-500/30">C</span> <span class="text-xs px-2 py-1 rounded bg-purple-900/30 text-purple-300 border border-purple-500/30">MinilibX</span> <span class="text-xs px-2 py-1 rounded bg-green-900/30 text-green-300 border border-green-500/30">Graphics</span>
+        </div><a href="https://github.com/isaiahrbs" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div><!-- Project 3 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-yellow-400"></div><span class="text-xs text-gray-500">server.cpp</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Webserv</h3>
+        <p class="text-gray-400 text-sm mb-4">HTTP/1.1 compliant web server implementation with CGI support and multiplexing.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-blue-900/30 text-blue-300 border border-blue-500/30">C++</span> <span class="text-xs px-2 py-1 rounded bg-orange-900/30 text-orange-300 border border-orange-500/30">HTTP</span> <span class="text-xs px-2 py-1 rounded bg-cyan-900/30 text-cyan-300 border border-cyan-500/30">Sockets</span>
+        </div><a href="https://github.com/isaiahrbs" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div><!-- Project 4 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-yellow-400"></div><span class="text-xs text-gray-500">ft_printf.c</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">ft_printf</h3>
+        <p class="text-gray-400 text-sm mb-4">Reimplementation of the printf function with variadic arguments and format specifiers.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-pink-900/30 text-pink-300 border border-pink-500/30">C</span> <span class="text-xs px-2 py-1 rounded bg-indigo-900/30 text-indigo-300 border border-indigo-500/30">Variadic</span> <span class="text-xs px-2 py-1 rounded bg-emerald-900/30 text-emerald-300 border border-emerald-500/30">Low-level</span>
+        </div><a href="https://github.com/isaiahrbs" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div>
+      </div>
+     </section>
+    </div><!-- Dimitri's Profile -->
+    <div id="profile-dimitri" class="fade-transition hidden-profile"><!-- Hero Section -->
+     <section class="terminal-card rounded-xl p-8 glow-border mb-8 animate-in stagger-2">
+      <div class="flex flex-col sm:flex-row items-center gap-6">
+       <div class="w-24 h-24 rounded-full bg-gradient-to-br from-pink-300 to-yellow-400 flex items-center justify-center text-3xl font-bold text-gray-900 shadow-lg">
+        D
+       </div>
+       <div class="text-center sm:text-left">
+        <h2 class="heading-font text-3xl font-bold text-white mb-1">Dimitri</h2>
+        <p class="text-pink-300 text-lg">42 Student • Software Developer</p>
+        <p class="text-gray-400 text-sm mt-2"><span class="text-green-400">●</span> Available for opportunities</p><a href="https://github.com/Nesplee" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 mt-3 text-yellow-400 hover:text-yellow-300 transition-colors">
+         <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> github.com/Nesplee </a>
+       </div>
+      </div>
+     </section><!-- Skills Section -->
+     <section class="terminal-card rounded-xl p-6 glow-border mb-8 animate-in stagger-3">
+      <div class="flex items-center gap-2 mb-4"><span class="text-yellow-400">$</span> <span class="text-pink-200">ls skills/</span>
+      </div>
+      <div class="flex flex-wrap gap-3"><span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">C</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">C++</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">Linux</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">Git</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">Shell Scripting</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">Systems Programming</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">Makefile</span> <span class="skill-tag px-4 py-2 rounded-lg text-sm text-pink-100">Algorithms</span>
+      </div>
+     </section><!-- Projects Section -->
+     <section class="mb-8 animate-in stagger-4">
+      <div class="terminal-card rounded-xl p-6 glow-border mb-6">
+       <div class="flex items-center gap-2"><span class="text-yellow-400">$</span> <span class="text-pink-200">tree projects/</span>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><!-- Project 1 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-xs text-gray-500">project.c</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">MiniShell</h3>
+        <p class="text-gray-400 text-sm mb-4">Recreation of a Unix shell with built-in commands, pipes, redirections, and environment variable handling.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-pink-900/30 text-pink-300 border border-pink-500/30">C</span> <span class="text-xs px-2 py-1 rounded bg-yellow-900/30 text-yellow-300 border border-yellow-500/30">POSIX</span> <span class="text-xs px-2 py-1 rounded bg-blue-900/30 text-blue-300 border border-blue-500/30">Parsing</span>
+        </div><a href="https://github.com/Nesplee" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div><!-- Project 2 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-xs text-gray-500">raycast.c</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Cub3D - Raycasting</h3>
+        <p class="text-gray-400 text-sm mb-4">A Wolfenstein 3D-style game engine using raycasting techniques for pseudo-3D rendering.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-pink-900/30 text-pink-300 border border-pink-500/30">C</span> <span class="text-xs px-2 py-1 rounded bg-purple-900/30 text-purple-300 border border-purple-500/30">MinilibX</span> <span class="text-xs px-2 py-1 rounded bg-green-900/30 text-green-300 border border-green-500/30">Graphics</span>
+        </div><a href="https://github.com/Nesplee" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div><!-- Project 3 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-xs text-gray-500">server.cpp</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Webserv</h3>
+        <p class="text-gray-400 text-sm mb-4">HTTP/1.1 compliant web server implementation with CGI support and multiplexing.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-blue-900/30 text-blue-300 border border-blue-500/30">C++</span> <span class="text-xs px-2 py-1 rounded bg-orange-900/30 text-orange-300 border border-orange-500/30">HTTP</span> <span class="text-xs px-2 py-1 rounded bg-cyan-900/30 text-cyan-300 border border-cyan-500/30">Sockets</span>
+        </div><a href="https://github.com/Nesplee" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div><!-- Project 4 -->
+       <div class="project-card rounded-xl p-6 card-hover">
+        <div class="flex items-center gap-2 mb-3">
+         <div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-xs text-gray-500">phonebook.cpp</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">PhoneBook</h3>
+        <p class="text-gray-400 text-sm mb-4">C++ module implementing a contact management system with OOP principles.</p>
+        <div class="flex flex-wrap gap-2 mb-4"><span class="text-xs px-2 py-1 rounded bg-blue-900/30 text-blue-300 border border-blue-500/30">C++</span> <span class="text-xs px-2 py-1 rounded bg-violet-900/30 text-violet-300 border border-violet-500/30">OOP</span> <span class="text-xs px-2 py-1 rounded bg-teal-900/30 text-teal-300 border border-teal-500/30">Classes</span>
+        </div><a href="https://github.com/Nesplee" target="_blank" rel="noopener noreferrer" class="btn-primary px-4 py-2 rounded-lg text-sm inline-flex items-center gap-2">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> View Repository </a>
+       </div>
+      </div>
+     </section>
+    </div><!-- About Us Section -->
+    <section class="terminal-card rounded-xl p-8 glow-border mb-8 animate-in stagger-5">
+     <div class="flex items-center gap-2 mb-4"><span class="text-yellow-400">$</span> <span class="text-pink-200">cat about_us.md</span>
+     </div>
+     <div class="section-divider my-4"></div>
+     <h2 class="heading-font text-2xl font-bold text-gradient mb-4">À propos de nous</h2>
+     <p id="about-text" class="text-gray-300 leading-relaxed">Nous sommes deux étudiants passionnés de <span class="text-pink-300">42 Lausanne</span>, une école de programmation innovante basée sur l'apprentissage peer-to-peer. Notre formation nous a permis de développer des compétences solides en <span class="text-yellow-300">programmation système</span>, en <span class="text-pink-300">C/C++</span>, et en résolution de problèmes complexes. Nous sommes motivés par les défis techniques et toujours prêts à apprendre de nouvelles technologies.</p>
+    </section><!-- Contact Section -->
+    <section class="terminal-card rounded-xl p-8 glow-border mb-8">
+     <div class="flex items-center gap-2 mb-4"><span class="text-yellow-400">$</span> <span class="text-pink-200">./contact --info</span>
+     </div>
+     <div class="section-divider my-4"></div>
+     <h2 class="heading-font text-2xl font-bold text-gradient mb-6">Contact</h2>
+     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div class="flex items-center gap-4 p-4 rounded-lg bg-gray-800/30 border border-yellow-500/20">
+       <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-pink-300 flex items-center justify-center text-xl font-bold text-gray-900">
+        I
+       </div>
+       <div>
+        <p class="text-white font-semibold">Isaiah</p><a href="https://github.com/isaiahrbs" target="_blank" rel="noopener noreferrer" class="text-yellow-300 text-sm hover:text-yellow-200 transition-colors flex items-center gap-1">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> isaiahrbs </a>
+       </div>
+      </div>
+      <div class="flex items-center gap-4 p-4 rounded-lg bg-gray-800/30 border border-pink-500/20">
+       <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-300 to-yellow-400 flex items-center justify-center text-xl font-bold text-gray-900">
+        D
+       </div>
+       <div>
+        <p class="text-white font-semibold">Dimitri</p><a href="https://github.com/Nesplee" target="_blank" rel="noopener noreferrer" class="text-pink-300 text-sm hover:text-pink-200 transition-colors flex items-center gap-1">
+         <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+         </svg> Nesplee </a>
+       </div>
+      </div>
+     </div>
+    </section><!-- Footer -->
+    <footer class="text-center py-8 border-t border-pink-500/10">
+     <div class="flex items-center justify-center gap-2 text-gray-500 text-sm"><span class="text-yellow-400">$</span> <span>echo</span> <span class="text-pink-300">"Made with 💻 at 42 Lausanne"</span>
+     </div>
+     <p class="text-gray-600 text-xs mt-2">© 2024 Isaiah &amp; Dimitri. All rights reserved.</p>
+    </footer>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      site_title: '<42_developers />',
+      about_text: 'Nous sommes deux étudiants passionnés de 42 Lausanne, une école de programmation innovante basée sur l\'apprentissage peer-to-peer. Notre formation nous a permis de développer des compétences solides en programmation système, en C/C++, et en résolution de problèmes complexes. Nous sommes motivés par les défis techniques et toujours prêts à apprendre de nouvelles technologies.',
+      background_color: '#1a1a2e',
+      surface_color: '#232338',
+      text_color: '#e5e5e5',
+      primary_accent: '#FFB6C1',
+      secondary_accent: '#FFD700'
+    };
+
+    let currentProfile = 'isaiah';
+
+    function switchProfile(profile) {
+      if (profile === currentProfile) return;
+      
+      const dimitriProfile = document.getElementById('profile-dimitri');
+      const isaiahProfile = document.getElementById('profile-isaiah');
+      const btnDimitri = document.getElementById('btn-dimitri');
+      const btnIsaiah = document.getElementById('btn-isaiah');
+      
+      if (profile === 'dimitri') {
+        dimitriProfile.classList.remove('hidden-profile');
+        dimitriProfile.classList.add('visible-profile');
+        isaiahProfile.classList.remove('visible-profile');
+        isaiahProfile.classList.add('hidden-profile');
+        btnDimitri.classList.add('active');
+        btnIsaiah.classList.remove('active');
+      } else {
+        isaiahProfile.classList.remove('hidden-profile');
+        isaiahProfile.classList.add('visible-profile');
+        dimitriProfile.classList.remove('visible-profile');
+        dimitriProfile.classList.add('hidden-profile');
+        btnIsaiah.classList.add('active');
+        btnDimitri.classList.remove('active');
+      }
+      
+      currentProfile = profile;
+    }
+
+    async function onConfigChange(config) {
+      const siteTitle = document.getElementById('site-title');
+      const aboutText = document.getElementById('about-text');
+      
+      if (siteTitle) {
+        siteTitle.textContent = config.site_title || defaultConfig.site_title;
+      }
+      
+      if (aboutText) {
+        const text = config.about_text || defaultConfig.about_text;
+        aboutText.innerHTML = text
+          .replace(/42 Lausanne/g, '<span class="text-pink-300">42 Lausanne</span>')
+          .replace(/programmation système/g, '<span class="text-yellow-300">programmation système</span>')
+          .replace(/C\/C\+\+/g, '<span class="text-pink-300">C/C++</span>');
+      }
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => {
+              config.background_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ background_color: value });
+            }
+          },
+          {
+            get: () => config.surface_color || defaultConfig.surface_color,
+            set: (value) => {
+              config.surface_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ surface_color: value });
+            }
+          },
+          {
+            get: () => config.text_color || defaultConfig.text_color,
+            set: (value) => {
+              config.text_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ text_color: value });
+            }
+          },
+          {
+            get: () => config.primary_accent || defaultConfig.primary_accent,
+            set: (value) => {
+              config.primary_accent = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ primary_accent: value });
+            }
+          },
+          {
+            get: () => config.secondary_accent || defaultConfig.secondary_accent,
+            set: (value) => {
+              config.secondary_accent = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ secondary_accent: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['site_title', config.site_title || defaultConfig.site_title],
+        ['about_text', config.about_text || defaultConfig.about_text]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c5814fb157a6aa0',t:'MTc2OTY4MjkxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
