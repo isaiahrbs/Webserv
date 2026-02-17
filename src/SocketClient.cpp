@@ -1,7 +1,8 @@
 #include "../inc/SocketClient.hpp"
 #include <unistd.h>
+#include <fcntl.h>
 
-SocketClient::SocketClient(int fd, struct sockaddr_in addr) : ASocket(0, "") {
+SocketClient::SocketClient(int fd, struct sockaddr_in addr) : ASocket(0, ""), _state(IDLE) { // Initialiser _state ici
 	this->_fd = fd;
 	this->_addr = addr;
 }
@@ -19,7 +20,15 @@ void SocketClient::create() {
 // Implémentation vide pour satisfaire l'héritage,
 // la non-blocking est généralement défini après accept()
 void SocketClient::setNonBlocking() {
-    // Peut être implémenté si nécessaire
+	if (this->_fd != -1) {
+		int flags = fcntl(this->_fd, F_GETFL, 0);
+		if (flags == -1) {
+			// Gérer l'erreur, par exemple, logger ou lancer une exception
+			// Pour le moment, on peut simplement retourner
+			return;
+		}
+		fcntl(this->_fd, F_SETFL, flags | O_NONBLOCK);
+	}
 }
 
 ssize_t SocketClient::sendData(const void* buf, size_t len) {
@@ -40,4 +49,13 @@ std::string& SocketClient::getRequestBuffer() {
 
 std::string& SocketClient::getResponseBuffer() {
 	return _responseBuffer;
+}
+
+// Implémentation des nouvelles méthodes
+ClientState SocketClient::getState() const {
+	return _state;
+}
+
+void SocketClient::setState(ClientState state) {
+	_state = state;
 }

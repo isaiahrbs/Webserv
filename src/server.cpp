@@ -122,6 +122,7 @@ void	server::run() {
 				SocketClient* newClient = listeningSocket->acceptClient();
 				if (newClient) {
 					_clients[newClient->getFd()] = newClient;
+					newClient->setNonBlocking(); // Rendre le socket client non-bloquant
 					std::cout << "New client connected with FD: " << newClient->getFd() << " on port " << port << std::endl;
 				}
 			}
