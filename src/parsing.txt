@@ -25,6 +25,7 @@ ensuite dans ta boucle tu peux  :
 
 
 
+
 Le + important c'est de rajouter un HTTPServerEngine*	_engine en privé dans ta classe,
 c'est dans cette classe ou j'ai articulé toutes mes autres fonctions, t'as plus qu'a appeler la fonction processRequest(raw, port) pour
 gérer les demandes et tes connections..
