@@ -26,7 +26,7 @@ protected:
 	struct	sockaddr_in	_addr;
 
 public:
-	ASocket(int port);
+	ASocket(int port, const std::string& host);
 	virtual	~ASocket();
 
 	virtual void	create() = 0;
