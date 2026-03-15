@@ -40,6 +40,49 @@ std::string	HTTPParser::_split(const std::string &str, char delimiter, size_t &p
 }
 
 /*	============================================================================
+		CHUNKED BODY DECODING (RFC 7230 §4.1)
+	============================================================================ */
+
+std::string	HTTPParser::_unchunkBody(const std::string &chunked) {
+	std::string	result;
+	size_t		pos = 0;
+
+	while (pos < chunked.length()) {
+		size_t	line_end = chunked.find("\r\n", pos);
+		if (line_end == std::string::npos)
+			break;
+		std::string	size_str = chunked.substr(pos, line_end - pos);
+		size_t		ext_pos = size_str.find(';');
+		if (ext_pos != std::string::npos)
+			size_str = size_str.substr(0, ext_pos);
+		size_str = _trim(size_str);
+		if (size_str.empty())
+			break;
+		size_t	chunk_size = 0;
+		for (size_t i = 0; i < size_str.length(); i++) {
+			char	c = size_str[i];
+			chunk_size *= 16;
+			if (c >= '0' && c <= '9')
+				chunk_size += (size_t)(c - '0');
+			else if (c >= 'a' && c <= 'f')
+				chunk_size += (size_t)(c - 'a' + 10);
+			else if (c >= 'A' && c <= 'F')
+				chunk_size += (size_t)(c - 'A' + 10);
+			else
+				break;
+		}
+		pos = line_end + 2;
+		if (chunk_size == 0)
+			break;
+		if (pos + chunk_size > chunked.length())
+			break;
+		result.append(chunked, pos, chunk_size);
+		pos += chunk_size + 2;
+	}
+	return (result);
+}
+
+/*	============================================================================
 		REQUEST LINE PARSING (GET /path HTTP/1.1)
 	============================================================================ */
 
@@ -129,6 +172,15 @@ RawRequest	HTTPParser::parseRequest(const std::string &rawData) {
 		req.body = rawData.substr(body_start);
 	}
 	_parseHeaders(headers_block, req);
+	std::map<std::string, std::string>::const_iterator te_it = req.headers.find("transfer-encoding");
+	if (te_it != req.headers.end()) {
+		std::string	te_val = httpToLower(te_it->second);
+		if (te_val.find("chunked") != std::string::npos) {
+			req.body = _unchunkBody(req.body);
+			req.headers["content-length"] = httpIntToString((long)req.body.length());
+			req.headerCount++;
+		}
+	}
 	return (req);
 }
 
@@ -144,6 +196,14 @@ bool	HTTPParser::isRequestComplete(const std::string &rawData,
 	body_start = findBodyStart(rawData);
 	if (body_start == std::string::npos)
 		return (false);
+	std::map<std::string, std::string>::const_iterator te_it = headers.find("transfer-encoding");
+	if (te_it != headers.end()) {
+		std::string	te_val = httpToLower(te_it->second);
+		if (te_val.find("chunked") != std::string::npos) {
+			std::string	body_part = rawData.substr(body_start);
+			return (body_part.find("0\r\n\r\n") != std::string::npos);
+		}
+	}
 	it = headers.find("content-length");
 	if (it == headers.end())
 		return (true);

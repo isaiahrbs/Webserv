@@ -11,6 +11,8 @@
 /* ************************************************************************** */
 
 #include "../inc/CGIHandler.hpp"
+#include <sys/select.h>
+#include <sys/time.h>
 
 /*	============================================================================
 		CGI DETECTION
@@ -153,30 +155,67 @@ CGIResult	CGIHandler::execute(const std::string &scriptPath, const Request &requ
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_in[0]);
 		close(pipe_out[1]);
+		std::string	scriptDir = ".";
+		size_t		slash = scriptPath.rfind('/');
+		if (slash != std::string::npos)
+			scriptDir = scriptPath.substr(0, slash);
+		chdir(scriptDir.c_str());
 		char *argv[] = {
 			(char *)interpreter.c_str(),
 			(char *)scriptPath.c_str(),
 			NULL
 		};
-		execve(interpreter.c_str(), argv, env_array.data());
+		execve(interpreter.c_str(), argv, &env_array[0]);
 		exit(127);
 	}
 	close(pipe_in[0]);
 	close(pipe_out[1]);
-	std::string body = request.getBody();
-	if (!body.empty()) {
-		write(pipe_in[1], body.c_str(), body.length());
+	fcntl(pipe_in[1], F_SETFL, O_NONBLOCK);
+	fcntl(pipe_out[0], F_SETFL, O_NONBLOCK);
+	std::string	body = request.getBody();
+	size_t		written = 0;
+	while (written < body.length()) {
+		fd_set			write_fds;
+		struct timeval	timeout;
+		FD_ZERO(&write_fds);
+		FD_SET(pipe_in[1], &write_fds);
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+		int ret = select(pipe_in[1] + 1, NULL, &write_fds, NULL, &timeout);
+		if (ret <= 0)
+			break;
+		ssize_t n = write(pipe_in[1], body.c_str() + written, body.length() - written);
+		if (n <= 0)
+			break;
+		written += (size_t)n;
 	}
 	close(pipe_in[1]);
-	char buffer[4096];
-	ssize_t bytes;
-	while ((bytes = read(pipe_out[0], buffer, sizeof(buffer))) > 0) {
+	char	buffer[4096];
+	bool	timed_out = false;
+	while (!timed_out) {
+		fd_set			read_fds;
+		struct timeval	timeout;
+		FD_ZERO(&read_fds);
+		FD_SET(pipe_out[0], &read_fds);
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+		int ret = select(pipe_out[0] + 1, &read_fds, NULL, NULL, &timeout);
+		if (ret < 0)
+			break;
+		if (ret == 0) {
+			timed_out = true;
+			kill(pid, SIGKILL);
+			break;
+		}
+		ssize_t bytes = read(pipe_out[0], buffer, sizeof(buffer));
+		if (bytes <= 0)
+			break;
 		result.output.append(buffer, bytes);
 	}
 	close(pipe_out[0]);
 	int status;
 	waitpid(pid, &status, 0);
-	if (WIFEXITED(status)) {
+	if (!timed_out && WIFEXITED(status)) {
 		result.exitCode = WEXITSTATUS(status);
 		result.success = (result.exitCode == 0);
 	}

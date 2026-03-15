@@ -95,6 +95,7 @@ RAW REQUEST STRUCTURE
 			static std::string	_split(const std::string &str, char delimiter, size_t &pos);
 			static void			_parseRequestLine(const std::string &line, RawRequest &req);
 			static void			_parseHeaders(const std::string &headerBlock, RawRequest &req);
+			static std::string	_unchunkBody(const std::string &chunked);
 };
 
 #endif
