@@ -155,14 +155,32 @@ CGIResult	CGIHandler::execute(const std::string &scriptPath, const Request &requ
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_in[0]);
 		close(pipe_out[1]);
-		std::string	scriptDir = ".";
-		size_t		slash = scriptPath.rfind('/');
+
+		// Résoudre le chemin absolu AVANT de chdir, sinon scriptPath relatif
+		// devient invalide après changement de répertoire
+		char        resolvedBuf[4096];
+		std::string absScriptPath = scriptPath;
+		if (scriptPath[0] != '/') {
+			char cwdBuf[4096];
+			if (getcwd(cwdBuf, sizeof(cwdBuf))) {
+				absScriptPath = std::string(cwdBuf) + "/" + scriptPath;
+			}
+		}
+		// Normaliser les doubles slashes
+		while (absScriptPath.find("//") != std::string::npos)
+			absScriptPath.replace(absScriptPath.find("//"), 2, "/");
+		(void)resolvedBuf;
+
+		// Changer vers le répertoire du script (pour les imports relatifs CGI)
+		std::string scriptDir = ".";
+		size_t      slash     = absScriptPath.rfind('/');
 		if (slash != std::string::npos)
-			scriptDir = scriptPath.substr(0, slash);
+			scriptDir = absScriptPath.substr(0, slash);
 		chdir(scriptDir.c_str());
+
 		char *argv[] = {
 			(char *)interpreter.c_str(),
-			(char *)scriptPath.c_str(),
+			(char *)absScriptPath.c_str(),
 			NULL
 		};
 		execve(interpreter.c_str(), argv, &env_array[0]);

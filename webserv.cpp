@@ -1,9 +1,11 @@
 #include "inc/server.hpp"
 #include "inc/SocketServer.hpp"
 #include <iostream>
+#include <csignal>
 #include "inc/Config.hpp"
 
 int main(int argc, char **argv) {
+    signal(SIGPIPE, SIG_IGN);
     std::string configPath = "config/server.conf";
     if (argc > 1)
         configPath = argv[1];

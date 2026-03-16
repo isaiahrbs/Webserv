@@ -31,10 +31,4 @@ public:
 	void		listenSocket();
 	SocketClient*			acceptClient(); // a implementer
 
-	bool		isListening() const;
-	void		setReuseAddr();
-	int			getPort() const;
-	int			getMaxUsers() const;
-
-
 };

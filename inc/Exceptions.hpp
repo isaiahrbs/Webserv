@@ -16,11 +16,7 @@
 #include <string>
 #include <sstream>
 
-/**
- * @brief	Exception levee lors du parsing de la configuration
- * @details	Cette exception est levée quand il y a une erreur dans le fichier de
- * 		configuration, comme une syntaxe invalide, un fichier manquant, ou une directive inconnue
-*/
+// Exception levée lors du parsing du fichier de configuration
 class	ConfigParserE : public std::exception {
 	private:
 		std::string			_message;
@@ -30,11 +26,7 @@ class	ConfigParserE : public std::exception {
 		virtual ~ConfigParserE() throw();
 };
 
-/**
- * @brief	Exception levée lors du parsing d'une requête HTTP
- * @details	Cette exception est levée quand une requête HTTP n'est pas valide,
- * 		par exemple si la première ligne n'est pas au bon format.
-*/
+// Exception levée lors du parsing d'une requête HTTP invalide
 class	RequestE : public std::exception {
 	private:
 		std::string			_message;
@@ -42,18 +34,4 @@ class	RequestE : public std::exception {
 		RequestE(const std::string &msg);
 		virtual const char*	what() const throw();
 		virtual ~RequestE() throw();
-};
-
-/**
- * @brief	Exception levée lors de la construction d'une réponse HTTP
- * @details	Cette exception est levée quand il y a un problème lors de la
- * 		construction ou de la sérialisation d'une réponse HTTP.
-*/
-class	ResponseE : public std::exception {
-	private:
-		std::string		_message;
-	public:
-		ResponseE(const std::string &msg);
-		virtual const char*	what() const throw();
-		virtual ~ResponseE() throw();
 };

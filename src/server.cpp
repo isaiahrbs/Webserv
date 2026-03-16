@@ -2,18 +2,66 @@
 #include "../inc/SocketServer.hpp"
 #include <iostream>
 #include <unistd.h>
-#include <errno.h>
-#include <fstream>
-#include <sstream>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <cerrno>
 
-server::server(const std::vector<ServerConfig>& serverConfigs) : _maxUsers(1024) {
+/*	============================================================================
+	HELPER: vérifie si la requête HTTP dans le buffer est complète
+	(headers + body entier selon Content-Length ou chunked)
+	============================================================================ */
+
+static bool isRequestComplete(const std::string& rawData)
+{
+	size_t headerEnd = rawData.find("\r\n\r\n");
+	if (headerEnd == std::string::npos)
+		return (false);
+
+	// Extraire et mettre en minuscules la section headers
+	std::string headersSection = httpToLower(rawData.substr(0, headerEnd));
+
+	// Transfer-Encoding: chunked → attendre "0\r\n\r\n"
+	size_t tePos = headersSection.find("transfer-encoding:");
+	if (tePos != std::string::npos) {
+		size_t lineEnd = headersSection.find('\n', tePos);
+		std::string teLine = headersSection.substr(tePos,
+			(lineEnd == std::string::npos ? headersSection.size() : lineEnd) - tePos);
+		if (teLine.find("chunked") != std::string::npos) {
+			std::string body = rawData.substr(headerEnd + 4);
+			return (body.find("0\r\n\r\n") != std::string::npos);
+		}
+	}
+
+	// Content-Length → attendre exactement ce nombre d'octets
+	size_t clPos = headersSection.find("content-length:");
+	if (clPos == std::string::npos)
+		return (true); // Pas de body attendu (GET, DELETE, etc.)
+
+	size_t valStart = clPos + 15;
+	while (valStart < headersSection.size() && headersSection[valStart] == ' ')
+		valStart++;
+	size_t valEnd = headersSection.find('\n', valStart);
+	if (valEnd == std::string::npos)
+		return (false);
+
+	long contentLength = atol(headersSection.substr(valStart, valEnd - valStart).c_str());
+	if (contentLength <= 0)
+		return (true);
+
+	size_t bodySize = rawData.size() - (headerEnd + 4);
+	return ((long)bodySize >= contentLength);
+}
+
+/*	============================================================================
+	CONSTRUCTEUR / DESTRUCTEUR
+	============================================================================ */
+
+server::server(const std::vector<ServerConfig>& serverConfigs)
+	: _maxUsers(1024), _engine(NULL)
+{
 	for (size_t i = 0; i < serverConfigs.size(); ++i) {
 		const ServerConfig& config = serverConfigs[i];
 		try {
-			/*
-				il retourne le dernier objet de la std::map
-				si il n'existe pas dans la liste
-			*/
 			if (_serverPorts.find(config.port) == _serverPorts.end()) {
 				SocketServer* newServer = new SocketServer(config.port, config.host, _maxUsers);
 				newServer->create();
@@ -21,199 +69,195 @@ server::server(const std::vector<ServerConfig>& serverConfigs) : _maxUsers(1024)
 				newServer->bindSocket();
 				newServer->listenSocket();
 				_serverPorts[config.port] = newServer;
-				std::cout << "Server listening on " << config.host << ":" << config.port << std::endl;
+				std::cout << "Server listening on " << config.host
+				          << ":" << config.port << std::endl;
 			} else {
-				std::cout << "Port " << config.port << " is already being listened to. Skipping duplicate." << std::endl;
+				std::cout << "Port " << config.port
+				          << " already listened. Skipping duplicate." << std::endl;
 			}
 		} catch (const ASocket::socketException& e) {
-			std::cerr << "Error setting up socket on port " << config.port << ": " << e.what() << std::endl;
-			throw serverException(std::string("Failed to set up all listening sockets: ") + e.what());
+			std::cerr << "Error on port " << config.port << ": " << e.what() << std::endl;
+			throw serverException(std::string("Failed to set up socket: ") + e.what());
 		}
 	}
+	_engine = new HTTPServerEngine(serverConfigs);
 }
 
-server::~server() {
-	for (std::map<int, SocketServer*>::iterator it = _serverPorts.begin(); it != _serverPorts.end(); ++it) {
-		std::cout << "Closing socket on port " << it->first << std::endl;
+server::~server()
+{
+	for (std::map<int, SocketServer*>::iterator it = _serverPorts.begin();
+	     it != _serverPorts.end(); ++it) {
 		delete it->second;
 	}
 	_serverPorts.clear();
 
-	for (std::map<int, SocketClient*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-		std::cout << "Closing client with FD " << it->first << std::endl;
+	for (std::map<int, SocketClient*>::iterator it = _clients.begin();
+	     it != _clients.end(); ++it) {
 		close(it->first);
 		delete it->second;
 	}
 	_clients.clear();
+	_clientPorts.clear();
+
+	if (_engine) {
+		delete _engine;
+		_engine = NULL;
+	}
 }
 
-int server::getServerLimit() {
-	return _maxUsers;
+int server::getServerLimit()
+{
+	return (_maxUsers);
 }
 
+/*	============================================================================
+	BOUCLE PRINCIPALE
+	Utilise select() pour read ET write, conformément au sujet :
+	  - jamais de recv/send sans passer par select() d'abord
+	  - pas de vérification de errno après read/write
+	============================================================================ */
 
+void server::run()
+{
+	while (true)
+	{
+		fd_set read_fds, write_fds;
+		int    max_fd = 0;
 
-/*
-	• Activity nous dis si il y a de l'activité mais pour savoir exactement ce qu'il se passe
-		on utilise la fonction FD_ISSET() pour savoir exactement si jappelle acceptClient ou recvData()
-*/
-void	server::run() {
-	fd_set	read_fds;
-	int		max_fd;
-
-	while (true) {
-
-		// vide la liste des FDs
 		FD_ZERO(&read_fds);
-		max_fd = 0;
+		FD_ZERO(&write_fds);
 
-		/*
-			Ajout de tous les FDs des sockets d'écoute dans read_fds et détermination du max_fd
-		*/
-		std::map<int, SocketServer*>::iterator it_servers;
-		for (it_servers = _serverPorts.begin(); it_servers != _serverPorts.end(); ++it_servers) {
-			int listening_fd = it_servers->second->getFd();
-			FD_SET(listening_fd, &read_fds);
-			if (listening_fd > max_fd) {
-				max_fd = listening_fd;
+		// --- Sockets d'écoute → toujours en read ---
+		for (std::map<int, SocketServer*>::iterator it = _serverPorts.begin();
+		     it != _serverPorts.end(); ++it) {
+			int fd = it->second->getFd();
+			FD_SET(fd, &read_fds);
+			if (fd > max_fd) max_fd = fd;
+		}
+
+		// --- Clients : read si on attend des données, write si on a une réponse ---
+		for (std::map<int, SocketClient*>::iterator it = _clients.begin();
+		     it != _clients.end(); ++it) {
+			int           fd     = it->first;
+			SocketClient* client = it->second;
+
+			if (!client->getResponseBuffer().empty())
+				FD_SET(fd, &write_fds);
+			else
+				FD_SET(fd, &read_fds);
+
+			if (fd > max_fd) max_fd = fd;
+		}
+
+		int activity = select(max_fd + 1, &read_fds, &write_fds, NULL, NULL);
+		if (activity < 0) {
+			std::cerr << "select() error" << std::endl;
+			continue;
+		}
+
+		// --- Nouvelles connexions ---
+		for (std::map<int, SocketServer*>::iterator it = _serverPorts.begin();
+		     it != _serverPorts.end(); ++it) {
+			int listening_fd = it->second->getFd();
+			if (!FD_ISSET(listening_fd, &read_fds))
+				continue;
+
+			SocketClient* newClient = it->second->acceptClient();
+			if (newClient) {
+				newClient->setNonBlocking();
+				int clientFd = newClient->getFd();
+				_clients[clientFd]     = newClient;
+				_clientPorts[clientFd] = it->first;
+				std::cout << "New client fd=" << clientFd
+				          << " on port " << it->first << std::endl;
 			}
 		}
 
-		std::cout << "Looking for activity..." << std::endl;
+		// --- I/O clients ---
+		// On collecte les fd à supprimer pour éviter l'invalidation d'itérateurs
+		std::vector<int> toRemove;
 
-		/*
-			on ajoute tous les fds des clients dans la liste fd (read_fds) avec FD_SET
-		*/
-		std::map<int, SocketClient*>::iterator it_clients;
-		for (it_clients = _clients.begin(); it_clients != _clients.end(); ++it_clients) {
-			int client_fd = it_clients->first;
-			FD_SET(client_fd, &read_fds);
+		for (std::map<int, SocketClient*>::iterator it = _clients.begin();
+		     it != _clients.end(); ++it)
+		{
+			int           fd     = it->first;
+			SocketClient* client = it->second;
 
-			/*
-				si il y a un client avec un fd plus grand que max_fd
-				ca veut dire que ya un nouveau client et donc on augemente le max_fd
-			*/
-			if (client_fd > max_fd) {
-				max_fd = client_fd;
-			}
-		}
+			// --- Lecture ---
+			if (FD_ISSET(fd, &read_fds)) {
+				char    buf[8192];
+				ssize_t bytes_read = recv(fd, buf, sizeof(buf), 0);
 
-		/*
-			avec tous les fds ajouter dedans la liste read_fds, on passe cette liste a select().
-			select() va checker et regarder ceux qui ont besoin de traitement, il garde
-			que ceux qui ont besoin de traitement, le reste c'est enlever
-		*/
-		int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
-
-		if (activity < 0)
-			throw serverException("Activity < 0");
-
-		/*
-			FD_ISSET() est une fonction qui retourne un true or false si le fd qu'on
-			check en premier argument est present dans la liste de fd en deuxieme argument
-
-			Vérifie chaque socket d'écoute pour de nouvelles connexions
-		*/
-		for (it_servers = _serverPorts.begin(); it_servers != _serverPorts.end(); ++it_servers) {
-			int listening_fd = it_servers->second->getFd();
-			if (FD_ISSET(listening_fd, &read_fds)) {
-				SocketServer* listeningSocket = it_servers->second;
-				int port = it_servers->first;
-				SocketClient* newClient = listeningSocket->acceptClient();
-				if (newClient) {
-					_clients[newClient->getFd()] = newClient;
-					newClient->setNonBlocking(); // Rendre le socket client non-bloquant
-					std::cout << "New client connected with FD: " << newClient->getFd() << " on port " << port << std::endl;
-				}
-			}
-		}
-
-		for (it_clients = _clients.begin(); it_clients != _clients.end(); /* increment handled inside */) {
-			int 			client_fd = it_clients->first;
-			SocketClient*	client_ptr = it_clients->second;
-
-			if (FD_ISSET(client_fd, &read_fds)) {
-
-				// Buffer temporaire de 4KB
-				char buf[4096];
-				ssize_t bytes_read = recv(client_fd, buf, sizeof(buf), 0);
-
-				//CAS 1: DECONNEXION OU ERREUR
+				// 0 = déconnexion propre, <0 = erreur (on ferme dans les deux cas)
 				if (bytes_read <= 0) {
-					if (bytes_read < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-						std::cout << "!!!False error!!!" << std::endl;
-						it_clients++;
-						continue;
-					}
-
-					// on ferme le fd du client, supprime son objet et on le supprime de std::map
-					std::cout << "Client " << client_fd << " disconnected or finished sending." << std::endl;
-					close(client_fd);
-					delete client_ptr;
-					_clients.erase(it_clients++);
+					toRemove.push_back(fd);
 					continue;
 				}
 
-				//CAS 2: DONNEES RECU, ON LES AJOUTE AU BUFFER
-				client_ptr->getRequestBuffer().append(buf, bytes_read);
+				client->getRequestBuffer().append(buf, (size_t)bytes_read);
 
-				// je check ici si la requete est finis en cherchant "\r\n\r\n"
-				size_t find_end = client_ptr->getRequestBuffer().find("\r\n\r\n");
-				if (find_end != std::string::npos) { // je check si la request est pas finis
-
-					std::cout << "FULL REQUEST: " << client_ptr->getRequestBuffer() << std::endl << std::endl;
-
-					// !! ici c'est pour toi Dim, tu peux faire tes envoie de requetes
-					std::string payload(buf, buf + bytes_read);
-					std::cout << "Received from fd " << client_fd << ": " << payload << std::endl;
-
-					// -- Minimal static file serving: always reply with .html --
-					std::string body;
-					std::ifstream file("www/website/website.html");
-					if (file) {
-						std::ostringstream ss;
-						ss << file.rdbuf();
-						body = ss.str();
-					}
-					std::ostringstream response;
-					if (body.empty()) {
-						body = "<html><body><h1>404 Not Found</h1></body></html>";
-						response << "HTTP/1.1 404 Not Found\r\n";
-					} else {
-						response << "HTTP/1.1 200 OK\r\n";
-					}
-					response << "Content-Type: text/html; charset=UTF-8\r\n";
-					response << "Content-Length: " << body.size() << "\r\n";
-					response << "Connection: keep-alive\r\n\r\n";
-					response << body;
-
-					std::string raw = response.str();
-					send(client_fd, raw.c_str(), raw.size(), 0);
-
-					// on vide le buffer du client
-					client_ptr->getRequestBuffer().clear();
-				}
-				else { // REQUETE INCOMPLETE
-					std::cout << "user: " << client_fd << " has slow connexion, comming back to him later." << std::endl;
+				// Traiter la requête dès qu'elle est complète
+				if (isRequestComplete(client->getRequestBuffer())) {
+					int port = _clientPorts[fd];
+					std::string response = _engine->processRequest(
+						client->getRequestBuffer(), port);
+					client->getResponseBuffer() = response;
+					client->getRequestBuffer().clear();
 				}
 			}
-			++it_clients;
+
+			// --- Écriture ---
+			if (FD_ISSET(fd, &write_fds)) {
+				std::string& resp = client->getResponseBuffer();
+				if (!resp.empty()) {
+					ssize_t sent = send(fd, resp.c_str(), resp.size(), 0);
+					if (sent < 0) {
+						toRemove.push_back(fd);
+						continue;
+					}
+					if (sent > 0)
+						resp = resp.substr((size_t)sent);
+
+					// Fermer après envoi complet (HTTP/1.0 style, conforme au sujet)
+					if (resp.empty())
+						toRemove.push_back(fd);
+				}
+			}
+		}
+
+		// --- Nettoyage des clients déconnectés/terminés ---
+		for (size_t i = 0; i < toRemove.size(); i++) {
+			int fd = toRemove[i];
+			std::map<int, SocketClient*>::iterator it = _clients.find(fd);
+			if (it != _clients.end()) {
+				close(fd);
+				delete it->second;
+				_clients.erase(it);
+				_clientPorts.erase(fd);
+			}
 		}
 	}
 }
 
-server::serverException::serverException() {
+/*	============================================================================
+	EXCEPTION
+	============================================================================ */
+
+server::serverException::serverException()
+{
 	_msg = "Server Exception";
 }
 
-server::serverException::serverException(const std::string& msg) {
+server::serverException::serverException(const std::string& msg)
+{
 	_msg = msg;
 }
 
-const char* server::serverException::what() const throw() {
-	return _msg.c_str();
+const char* server::serverException::what() const throw()
+{
+	return (_msg.c_str());
 }
 
-server::serverException::~serverException() throw() {
-	std::cout << "Server destructor called" << std::endl;
+server::serverException::~serverException() throw()
+{
 }

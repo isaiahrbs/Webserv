@@ -41,7 +41,9 @@ std::string	HTTPSerializer::_buildHeadersBlock(const RawResponse &response) {
 		headers_block += it->second;
 		headers_block += "\r\n";
 	}
-	if (!response.body.empty()) {
+	// N'ajouter Content-Length que si pas déjà dans la map des headers
+	if (!response.body.empty()
+	    && response.headers.find("Content-Length") == response.headers.end()) {
 		headers_block += "Content-Length: ";
 		headers_block += httpIntToString(response.body.length());
 		headers_block += "\r\n";

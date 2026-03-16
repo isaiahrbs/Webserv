@@ -2,17 +2,21 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 #include "Config.hpp"
 #include "SocketServer.hpp"
 #include "SocketClient.hpp"
-#include <vector>
+#include "HTTPCommon.hpp"
+#include "HTTPParser.hpp"
 
 class server
 {
 private:
 	int _maxUsers;
-	std::map<int, SocketClient*> _clients; // les clients connecté
-	std::map<int, SocketServer*> _serverPorts;
+	std::map<int, SocketClient*> _clients;    // fd → client connecté
+	std::map<int, SocketServer*> _serverPorts; // port → socket serveur
+	std::map<int, int>           _clientPorts; // fd client → port serveur
+	HTTPServerEngine*            _engine;
 
 public:
 	// ===== Constructors =====

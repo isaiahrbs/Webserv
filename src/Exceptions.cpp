@@ -24,8 +24,3 @@ const char*	RequestE::what() const throw() {
 }
 RequestE::~RequestE() throw() {}
 
-ResponseE::ResponseE(const std::string &msg) : _message(msg) {}
-const char*	ResponseE::what() const throw() {
-	return (_message.c_str());
-}
-ResponseE::~ResponseE() throw() {}

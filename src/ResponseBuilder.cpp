@@ -34,7 +34,7 @@ std::string	ResponseBuilder::_loadErrorPage(int code) {
 		fullPath += errorPagePath;
 		if (FileHandler::exists(fullPath)) {
 			try {
-				return (FileHandler::getContent(errorPagePath));
+				return (FileHandler::getContent(fullPath));
 			} catch (...) {
 				// Fallback si erreur de lecture
 				return ("");
