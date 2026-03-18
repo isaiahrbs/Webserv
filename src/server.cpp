@@ -5,6 +5,13 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <cerrno>
+#include <csignal>
+
+static volatile sig_atomic_t g_stop = 0;
+
+void serverSigHandler(int) {
+	g_stop = 1;
+}
 
 /*	============================================================================
 	HELPER: vérifie si la requête HTTP dans le buffer est complète
@@ -61,14 +68,16 @@ server::server(const std::vector<ServerConfig>& serverConfigs)
 {
 	for (size_t i = 0; i < serverConfigs.size(); ++i) {
 		const ServerConfig& config = serverConfigs[i];
+		SocketServer* newServer = NULL;
 		try {
 			if (_serverPorts.find(config.port) == _serverPorts.end()) {
-				SocketServer* newServer = new SocketServer(config.port, config.host, _maxUsers);
+				newServer = new SocketServer(config.port, config.host, _maxUsers);
 				newServer->create();
 				newServer->setNonBlocking();
 				newServer->bindSocket();
 				newServer->listenSocket();
 				_serverPorts[config.port] = newServer;
+				newServer = NULL;
 				std::cout << "Server listening on " << config.host
 				          << ":" << config.port << std::endl;
 			} else {
@@ -76,6 +85,11 @@ server::server(const std::vector<ServerConfig>& serverConfigs)
 				          << " already listened. Skipping duplicate." << std::endl;
 			}
 		} catch (const ASocket::socketException& e) {
+			delete newServer;
+			for (std::map<int, SocketServer*>::iterator it = _serverPorts.begin();
+			     it != _serverPorts.end(); ++it)
+				delete it->second;
+			_serverPorts.clear();
 			std::cerr << "Error on port " << config.port << ": " << e.what() << std::endl;
 			throw serverException(std::string("Failed to set up socket: ") + e.what());
 		}
@@ -93,8 +107,7 @@ server::~server()
 
 	for (std::map<int, SocketClient*>::iterator it = _clients.begin();
 	     it != _clients.end(); ++it) {
-		close(it->first);
-		delete it->second;
+		delete it->second;  // ~ASocket() ferme le fd via closeSocket()
 	}
 	_clients.clear();
 	_clientPorts.clear();
@@ -119,7 +132,9 @@ int server::getServerLimit()
 
 void server::run()
 {
-	while (true)
+	signal(SIGINT, serverSigHandler);
+	signal(SIGTERM, serverSigHandler);
+	while (!g_stop)
 	{
 		fd_set read_fds, write_fds;
 		int    max_fd = 0;
@@ -230,8 +245,7 @@ void server::run()
 			int fd = toRemove[i];
 			std::map<int, SocketClient*>::iterator it = _clients.find(fd);
 			if (it != _clients.end()) {
-				close(fd);
-				delete it->second;
+				delete it->second;  // ~ASocket() ferme le fd via closeSocket()
 				_clients.erase(it);
 				_clientPorts.erase(fd);
 			}

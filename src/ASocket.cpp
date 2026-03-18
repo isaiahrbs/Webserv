@@ -60,6 +60,5 @@ const char* ASocket::socketException::what() const throw() {
 }
 
 ASocket::socketException::~socketException() throw() {
-	std::cout << "Socket destructor called" << std::endl;
 }
 

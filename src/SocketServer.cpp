@@ -14,8 +14,7 @@ SocketServer::SocketServer(int port, const std::string& host, int maxUsers) : AS
 }
 
 SocketServer::~SocketServer() {
-	if (_fd != -1)
-		close(_fd);
+	// ASocket::~ASocket() appelle closeSocket() qui gère la fermeture
 }
 
 void	SocketServer::create() {
