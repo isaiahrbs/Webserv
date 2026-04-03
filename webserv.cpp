@@ -6,9 +6,11 @@
 
 int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
-    std::string configPath = "config/server.conf";
-    if (argc > 1)
-        configPath = argv[1];
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+        return (1);
+    }
+    std::string configPath = argv[1];
 
     try {
         ConfigParser parser;
