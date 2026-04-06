@@ -33,7 +33,7 @@ class	RequestHandler {
 	private:
 		std::vector<ServerConfig>	_servers;
 
-		ServerConfig*	_findServerConfig(int port);
+		ServerConfig*	_findServerConfig(int port, const std::string &host);
 		LocationConfig*	_findLocation(ServerConfig* server, const std::string &uri);
 		bool			_isMethodAllowed(LocationConfig* loc, const std::string &method);
 		bool			_isBodyComplete(const std::string &rawData, const Request &request);

@@ -18,7 +18,7 @@
 # include <cstdlib>
 # include <vector>
 class RequestHandler;
-class ServerConfig;
+# include "Config.hpp"
 
 /*	============================================================================
 	HTTP STATUS CODES

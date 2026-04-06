@@ -20,12 +20,22 @@ RequestHandler::~RequestHandler() {}
 	CONFIGURATION ROUTING
 	============================================================================ */
 
-ServerConfig*	RequestHandler::_findServerConfig(int port) {
+ServerConfig*	RequestHandler::_findServerConfig(int port, const std::string &host) {
+	ServerConfig*	fallback = NULL;
+
 	for (size_t i = 0; i < _servers.size(); i++) {
-		if (_servers[i].port == port)
-			return (&_servers[i]);
+		if (_servers[i].port != port)
+			continue;
+		// Premier serveur sur ce port = fallback si aucun server_name ne correspond
+		if (fallback == NULL)
+			fallback = &_servers[i];
+		// Chercher une correspondance exacte avec un server_name
+		for (size_t j = 0; j < _servers[i].serverNames.size(); j++) {
+			if (_servers[i].serverNames[j] == host)
+				return (&_servers[i]);
+		}
 	}
-	return (NULL);
+	return (fallback);
 }
 
 LocationConfig*	RequestHandler::_findLocation(ServerConfig* server, const std::string &uri) {
@@ -323,7 +333,13 @@ Response	RequestHandler::handleRequest(const Request &request,
 	if (!_isBodyComplete(rawData, request))
 		return (builder.buildError(400, "Bad Request"));
 
-	ServerConfig* server = _findServerConfig(port);
+	// Extraire le host depuis le header Host: (sans le port éventuel)
+	std::string hostHeader = request.getHeader("host");
+	size_t colonPos = hostHeader.find(':');
+	if (colonPos != std::string::npos)
+		hostHeader = hostHeader.substr(0, colonPos);
+
+	ServerConfig* server = _findServerConfig(port, hostHeader);
 	if (!server)
 		return (builder.buildError(500, "Internal Server Error"));
 	builder = ResponseBuilder(server);
