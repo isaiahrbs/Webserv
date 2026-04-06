@@ -12,6 +12,19 @@
 
 #include "../inc/Config.hpp"
 
+static bool	isValidIPv4(const std::string &ip) {
+	if (ip.empty())
+		return (false);
+	int dots = 0;
+	for (size_t i = 0; i < ip.length(); i++) {
+		if (ip[i] == '.')
+			dots++;
+		else if (!std::isdigit(ip[i]))
+			return (false);
+	}
+	return (dots == 3);
+}
+
 ConfigParser::ConfigParser() : _position(0), _lineNumber(1) {}
 ConfigParser::~ConfigParser() {}
 
@@ -120,6 +133,8 @@ void	ConfigParser::_parseListenDirective(const std::string &listenStr, std::stri
 	std::string	portStr = listenStr.substr(colonP + 1);
 	if (host.empty())
 		throw ConfigParserE(_formatErrorMsg("Listen directive: IP address cant be empty"));
+	if (!isValidIPv4(host))
+		throw ConfigParserE(_formatErrorMsg("Listen directive: invalid IPv4 address: " + host));
 	if (portStr.empty())
 		throw ConfigParserE(_formatErrorMsg("Listen directive: port cant be empty"));
 	port = _stringToInt(portStr);

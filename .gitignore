@@ -6,6 +6,12 @@ doc/
 *.o
 webserv
 
+# Fichiers uploadés pendant les tests/l'exécution
+www/server2/uploads/*
+!www/server2/uploads/.gitkeep
+www/server2/files/*
+!www/server2/files/.gitkeep
+
 # Fichiers de configuration d'éditeur (optionnel mais recommandé)
 .vscode/
 *.swp
