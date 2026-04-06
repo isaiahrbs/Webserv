@@ -132,8 +132,8 @@ int server::getServerLimit()
 
 void server::run()
 {
-	signal(SIGINT, serverSigHandler);
-	signal(SIGTERM, serverSigHandler);
+	signal(SIGINT, serverSigHandler); // c'est pour le ctrl-c, si c'est appeller, signal va lancer la fonction en 2eme parametre pour mettre g_stop a 1 qui va stopper la boucle infinie
+	signal(SIGTERM, serverSigHandler); // c'est la meme mais just si le pc s'etteint
 	while (!g_stop)
 	{
 		fd_set read_fds, write_fds;
@@ -147,7 +147,8 @@ void server::run()
 		     it != _serverPorts.end(); ++it) {
 			int fd = it->second->getFd();
 			FD_SET(fd, &read_fds);
-			if (fd > max_fd) max_fd = fd;
+			if (fd > max_fd)
+				max_fd = fd;
 		}
 
 		// --- Clients : read si on attend des données, write si on a une réponse ---
@@ -161,7 +162,8 @@ void server::run()
 			else
 				FD_SET(fd, &read_fds);
 
-			if (fd > max_fd) max_fd = fd;
+			if (fd > max_fd)
+				max_fd = fd;
 		}
 
 		int activity = select(max_fd + 1, &read_fds, &write_fds, NULL, NULL);
