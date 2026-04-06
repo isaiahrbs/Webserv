@@ -13,18 +13,14 @@ class server
 {
 private:
 	int _maxUsers;
-	std::map<int, SocketClient*> _clients;    // fd → client connecté
-	std::map<int, SocketServer*> _serverPorts; // port → socket serveur
-	std::map<int, int>           _clientPorts; // fd client → port serveur
+	std::map<int, SocketClient*> _clients;
+	std::map<int, SocketServer*> _serverPorts;
+	std::map<int, int>           _clientPorts;
 	HTTPServerEngine*            _engine;
 
 public:
-	// ===== Constructors =====
-	//prendre en parametre les ports mis dans le vector par le parsing
 	server(const std::vector<ServerConfig>& serverConfigs);
 	~server();
-
-	// ===== Functions =====
 	int getServerLimit();
 	void run();
 
@@ -32,17 +28,9 @@ public:
 		private:
 			std::string	_msg;
 		public:
-		
-			// if no custom message, default message
 			serverException();
-			
-			// for custom error message
 			serverException(const std::string &msg);
-
-			// returns error message from constructor
 			virtual const char*	what() const throw();
-
-			// obliger d'ajouter lui car std::exception a un destructor throw()
 			virtual ~serverException() throw();
 	};
 };

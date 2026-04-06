@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   SocketClient.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: irobinso <irobinso@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 11:33:58 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/13 07:40:42 by irobinso         ###   ########.fr       */
+/*   Updated: 2026/04/06 10:53:55 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 
 class	SocketClient : public ASocket {
 private:
-	std::string _requestBuffer;// pour stocker petit à petit la requete
-	std::string _responseBuffer;// pour renvoyer au client une reponse chuck par chunk
+	std::string _requestBuffer;
+	std::string _responseBuffer;
 
 public:
 	SocketClient(int fd, struct sockaddr_in addr);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   SocketServer.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: irobinso <irobinso@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/03 11:34:17 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/24 12:31:43 by irobinso         ###   ########.fr       */
+/*   Updated: 2026/04/06 10:50:09 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,6 @@ public:
 	void		setNonBlocking();
 	void		bindSocket();
 	void		listenSocket();
-	SocketClient*			acceptClient(); // a implementer
+	SocketClient*			acceptClient();
 
 };

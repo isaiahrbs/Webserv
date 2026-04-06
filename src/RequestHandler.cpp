@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/13 09:19:21 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/03/15 00:00:00 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/04/06 10:48:03 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,10 +26,8 @@ ServerConfig*	RequestHandler::_findServerConfig(int port, const std::string &hos
 	for (size_t i = 0; i < _servers.size(); i++) {
 		if (_servers[i].port != port)
 			continue;
-		// Premier serveur sur ce port = fallback si aucun server_name ne correspond
 		if (fallback == NULL)
 			fallback = &_servers[i];
-		// Chercher une correspondance exacte avec un server_name
 		for (size_t j = 0; j < _servers[i].serverNames.size(); j++) {
 			if (_servers[i].serverNames[j] == host)
 				return (&_servers[i]);
@@ -41,13 +39,10 @@ ServerConfig*	RequestHandler::_findServerConfig(int port, const std::string &hos
 LocationConfig*	RequestHandler::_findLocation(ServerConfig* server, const std::string &uri) {
 	if (!server)
 		return (NULL);
-
-	// Utiliser seulement le path de l'URI (sans query string) pour le matching
 	std::string uriPath = uri;
 	size_t qPos = uriPath.find('?');
 	if (qPos != std::string::npos)
 		uriPath = uriPath.substr(0, qPos);
-
 	LocationConfig*	best_match = NULL;
 	size_t			best_length = 0;
 	for (size_t i = 0; i < server->locations.size(); i++) {
@@ -98,32 +93,21 @@ bool	RequestHandler::_isBodyTooLarge(long bodySize, ServerConfig* server) {
 
 std::string	RequestHandler::_buildFilePath(const std::string &uri,
                                             ServerConfig* server, LocationConfig* loc) {
-	// Choisir la racine : location d'abord, sinon serveur
 	std::string root = (loc->root.empty() && server) ? server->root : loc->root;
-
-	// Supprimer le query string de l'URI
 	std::string path = uri;
 	size_t qPos = path.find('?');
 	if (qPos != std::string::npos)
 		path = path.substr(0, qPos);
-
-	// Supprimer le préfixe de la location (alias-style)
 	if (!loc->path.empty() && path.length() >= loc->path.length()
 	    && path.substr(0, loc->path.length()) == loc->path) {
 		path = path.substr(loc->path.length());
 	}
-
-	// Supprimer le slash en début du chemin relatif
 	if (!path.empty() && path[0] == '/')
 		path = path.substr(1);
-
-	// Combiner root + chemin relatif
 	std::string filePath = root;
 	if (!filePath.empty() && filePath[filePath.length() - 1] != '/')
 		filePath += '/';
 	filePath += path;
-
-	// Sécurité : rejeter les tentatives de directory traversal (/../)
 	std::string normalized = FileHandler::normalizePath(filePath);
 	if (normalized.empty())
 		return ("");
@@ -139,66 +123,45 @@ Response	RequestHandler::_buildCGIResponse(const CGIResult &result,
                                                ResponseBuilder &builder) {
 	if (!result.success && result.exitCode != 0)
 		return (builder.buildError(502, "Bad Gateway"));
-
 	std::string output = result.output;
-
-	// Chercher la séparation headers/body dans la sortie CGI
 	size_t headerEnd = output.find("\r\n\r\n");
 	if (headerEnd == std::string::npos)
 		headerEnd = output.find("\n\n");
-
-	if (headerEnd == std::string::npos) {
-		// Pas de headers dans la sortie, tout est le body
+	if (headerEnd == std::string::npos)
 		return (builder.buildSuccess(200, output, "text/html"));
-	}
-
 	std::string cgiHeaders = output.substr(0, headerEnd);
 	size_t      bodyStart  = headerEnd + ((output[headerEnd] == '\r') ? 4 : 2);
 	std::string body       = output.substr(bodyStart);
-
-	// Parser les headers CGI ligne par ligne
 	int         statusCode  = 200;
 	std::string contentType = "text/html";
-
 	size_t pos = 0;
 	while (pos < cgiHeaders.size()) {
 		size_t lineEnd = cgiHeaders.find('\n', pos);
 		if (lineEnd == std::string::npos)
 			lineEnd = cgiHeaders.size();
-
 		std::string line = cgiHeaders.substr(pos, lineEnd - pos);
-		// Supprimer le \r en fin de ligne si présent
 		if (!line.empty() && line[line.size() - 1] == '\r')
 			line = line.substr(0, line.size() - 1);
 		pos = lineEnd + 1;
-
 		if (line.empty())
 			continue;
-
 		size_t colonPos = line.find(':');
 		if (colonPos == std::string::npos)
 			continue;
-
 		std::string key   = line.substr(0, colonPos);
 		std::string value = line.substr(colonPos + 1);
-
-		// Supprimer les espaces en début de valeur
 		size_t valStart = value.find_first_not_of(" \t");
 		if (valStart != std::string::npos)
 			value = value.substr(valStart);
-
-		// Convertir la clé en minuscules
 		for (size_t i = 0; i < key.size(); i++) {
 			if (key[i] >= 'A' && key[i] <= 'Z')
 				key[i] += 32;
 		}
-
 		if (key == "status")
 			statusCode = atoi(value.c_str());
 		else if (key == "content-type")
 			contentType = value;
 	}
-
 	return (builder.buildSuccess(statusCode, body, contentType));
 }
 
@@ -210,18 +173,15 @@ Response	RequestHandler::_handleGET(const Request &request, ServerConfig* server
                                        LocationConfig* loc) {
 	ResponseBuilder	builder(server);
 	std::string     filePath = _buildFilePath(request.getUri(), server, loc);
-
 	if (filePath.empty())
 		return (builder.buildError(403, "Forbidden"));
 	if (FileHandler::isDirectory(filePath)) {
-		// Chercher le fichier index
 		if (!loc->index.empty()) {
 			std::string indexPath = filePath;
 			if (!indexPath.empty() && indexPath[indexPath.length() - 1] != '/')
 				indexPath += '/';
 			indexPath += loc->index;
 			if (FileHandler::exists(indexPath)) {
-				// Vérifier si le fichier index est un CGI
 				if (!loc->cgiHandlers.empty()
 				    && CGIHandler::isCGI(indexPath, loc->cgiHandlers)) {
 					CGIResult result = CGIHandler::execute(
@@ -233,7 +193,6 @@ Response	RequestHandler::_handleGET(const Request &request, ServerConfig* server
 				return (builder.buildSuccess(200, content, mimeType));
 			}
 		}
-		// Autoindex
 		if (loc->autoIndex) {
 			std::string listing = FileHandler::generateDirectoryListing(
 				filePath, request.getUri());
@@ -241,18 +200,13 @@ Response	RequestHandler::_handleGET(const Request &request, ServerConfig* server
 		}
 		return (builder.buildError(403, "Forbidden"));
 	}
-
 	if (!FileHandler::exists(filePath))
 		return (builder.buildError(404, "Not Found"));
-
-	// Exécuter via CGI si l'extension est configurée
 	if (!loc->cgiHandlers.empty() && CGIHandler::isCGI(filePath, loc->cgiHandlers)) {
 		CGIResult result = CGIHandler::execute(
 			filePath, request, *server, loc->cgiHandlers);
 		return (_buildCGIResponse(result, builder));
 	}
-
-	// Fichier statique
 	std::string content  = FileHandler::getContent(filePath);
 	std::string mimeType = httpGetMimeType(filePath);
 	return (builder.buildSuccess(200, content, mimeType));
@@ -266,11 +220,8 @@ Response	RequestHandler::_handlePOST(const Request &request, ServerConfig* serve
                                         LocationConfig* loc) {
 	ResponseBuilder	builder(server);
 	long            bodySize = (long)request.getBody().length();
-
 	if (_isBodyTooLarge(bodySize, server))
 		return (builder.buildError(413, "Payload Too Large"));
-
-	// Si la location a des CGI configurés, vérifier si l'URI pointe vers un script
 	if (!loc->cgiHandlers.empty()) {
 		std::string filePath = _buildFilePath(request.getUri(), server, loc);
 		if (CGIHandler::isCGI(filePath, loc->cgiHandlers)
@@ -280,13 +231,10 @@ Response	RequestHandler::_handlePOST(const Request &request, ServerConfig* serve
 			return (_buildCGIResponse(result, builder));
 		}
 	}
-
-	// Upload de fichier
 	if (!loc->allowUpload)
 		return (builder.buildError(405, "Method Not Allowed"));
 	if (loc->uploadStore.empty())
 		return (builder.buildError(500, "Internal Server Error"));
-
 	std::string uploadPath = loc->uploadStore;
 	if (!uploadPath.empty() && uploadPath[uploadPath.length() - 1] != '/')
 		uploadPath += '/';
@@ -294,10 +242,8 @@ Response	RequestHandler::_handlePOST(const Request &request, ServerConfig* serve
 	if (filename.empty())
 		filename = "upload";
 	uploadPath += filename;
-
 	if (!FileHandler::writeContent(uploadPath, request.getBody()))
 		return (builder.buildError(500, "Internal Server Error"));
-
 	std::string resp = "<html><body><h1>File uploaded successfully</h1></body></html>";
 	return (builder.buildSuccess(201, resp, "text/html"));
 }
@@ -310,7 +256,6 @@ Response	RequestHandler::_handleDELETE(const Request &request, ServerConfig* ser
                                           LocationConfig* loc) {
 	ResponseBuilder	builder(server);
 	std::string     filePath = _buildFilePath(request.getUri(), server, loc);
-
 	if (filePath.empty())
 		return (builder.buildError(403, "Forbidden"));
 	if (!FileHandler::exists(filePath))
@@ -329,26 +274,19 @@ Response	RequestHandler::_handleDELETE(const Request &request, ServerConfig* ser
 Response	RequestHandler::handleRequest(const Request &request,
                                           const std::string &rawData, int port) {
 	ResponseBuilder	builder(NULL);
-
 	if (!_isBodyComplete(rawData, request))
 		return (builder.buildError(400, "Bad Request"));
-
-	// Extraire le host depuis le header Host: (sans le port éventuel)
 	std::string hostHeader = request.getHeader("host");
 	size_t colonPos = hostHeader.find(':');
 	if (colonPos != std::string::npos)
 		hostHeader = hostHeader.substr(0, colonPos);
-
 	ServerConfig* server = _findServerConfig(port, hostHeader);
 	if (!server)
 		return (builder.buildError(500, "Internal Server Error"));
 	builder = ResponseBuilder(server);
-
 	LocationConfig* loc = _findLocation(server, request.getUri());
 	if (!loc)
 		return (builder.buildError(404, "Not Found"));
-
-	// Redirection 301 avant tout traitement
 	if (!loc->redirectUrl.empty()) {
 		Response resp;
 		resp.setVersion("HTTP/1.1");
@@ -359,11 +297,9 @@ Response	RequestHandler::handleRequest(const Request &request,
 		resp.setBody("");
 		return (resp);
 	}
-
 	std::string method = request.getMethod();
 	if (!_isMethodAllowed(loc, method))
 		return (builder.buildError(405, "Method Not Allowed"));
-
 	if (method == "GET")
 		return (_handleGET(request, server, loc));
 	else if (method == "POST")

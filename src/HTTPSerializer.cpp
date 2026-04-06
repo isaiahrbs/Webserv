@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/19 09:55:35 by dinguyen          #+#    #+#             */
-/*   Updated: 2026/01/19 10:14:15 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/04/06 10:53:55 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,6 @@ std::string	HTTPSerializer::_buildHeadersBlock(const RawResponse &response) {
 		headers_block += it->second;
 		headers_block += "\r\n";
 	}
-	// N'ajouter Content-Length que si pas déjà dans la map des headers
 	if (!response.body.empty()
 	    && response.headers.find("Content-Length") == response.headers.end()) {
 		headers_block += "Content-Length: ";

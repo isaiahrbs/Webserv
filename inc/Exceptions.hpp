@@ -6,7 +6,7 @@
 /*   By: dinguyen <dinguyen@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/21 09:36:07 by dinguyen          #+#    #+#             */
-/*   Updated: 2025/12/21 13:06:49 by dinguyen         ###   ########.fr       */
+/*   Updated: 2026/04/06 10:48:48 by dinguyen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@
 #include <string>
 #include <sstream>
 
-// Exception levée lors du parsing du fichier de configuration
 class	ConfigParserE : public std::exception {
 	private:
 		std::string			_message;
@@ -26,7 +25,6 @@ class	ConfigParserE : public std::exception {
 		virtual ~ConfigParserE() throw();
 };
 
-// Exception levée lors du parsing d'une requête HTTP invalide
 class	RequestE : public std::exception {
 	private:
 		std::string			_message;
